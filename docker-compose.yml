@@ -1,0 +1,32 @@
+version: '3.9'
+services:
+  postgres:
+    container_name: bookingDB
+    image: postgres:15
+    hostname: bookingDB
+    environment:
+      - POSTGRES_DB=bookingService
+      - POSTGRES_USER=booking
+      - POSTGRES_PASSWORD=ilia
+    ports:
+      - "5433:5432" # Внешний порт 5433, внутренний порт 5432 PostgreSQL
+
+  webapi:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    hostname: webapi
+    ports:
+      - "8082:8080" # Внешний порт 8082, внутренний порт приложения 8080
+    depends_on:
+      - postgres
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://bookingDB:5432/bookingService
+      - SPRING_DATASOURCE_USERNAME=booking
+      - SPRING_DATASOURCE_PASSWORD=ilia
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      retries: 5
+      start_period: 15s
+      timeout: 10s
