@@ -1,7 +1,9 @@
 package ru.tpu.hostel.booking.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import ru.tpu.hostel.booking.client.UserServiceClient;
 import ru.tpu.hostel.booking.dto.request.BookingTimeLineRequestDto;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequestDto;
 import ru.tpu.hostel.booking.dto.response.BookingResponseDto;
@@ -11,6 +13,7 @@ import ru.tpu.hostel.booking.entity.Booking;
 import ru.tpu.hostel.booking.enums.BookingStatus;
 import ru.tpu.hostel.booking.enums.BookingType;
 import ru.tpu.hostel.booking.exception.BookingNotFoundException;
+import ru.tpu.hostel.booking.exception.UserNotFound;
 import ru.tpu.hostel.booking.mapper.BookingMapper;
 import ru.tpu.hostel.booking.repository.BookingRepository;
 import ru.tpu.hostel.booking.service.BookingService;
@@ -28,14 +31,19 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final TimeLineBookingWay timeLineBookingWay;
     private final TimeSlotBookingWay timeSlotBookingWay;
+    private final UserServiceClient userServiceClient;
 
     @Override
     public BookingResponseDto createBooking(BookingTimeLineRequestDto bookingTimeLineRequestDto, UUID userId) {
+        checkUser(userId);
+
         return timeLineBookingWay.createBooking(bookingTimeLineRequestDto, userId);
     }
 
     @Override
     public BookingResponseDto createBooking(BookingTimeSlotRequestDto bookingTimeSlotRequestDto, UUID userId) {
+        checkUser(userId);
+
         return timeSlotBookingWay.createBooking(bookingTimeSlotRequestDto, userId);
     }
 
@@ -51,6 +59,8 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingResponseDto cancelBooking(UUID bookingId, UUID userId) {
+        checkUser(userId);
+
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException("Бронь не найдена"));
 
@@ -70,6 +80,29 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingResponseDto> getBookingsByStatus(BookingStatus status, UUID userId) {
-        return List.of();
+        List<Booking> bookings = bookingRepository.findAllByStatusAndUser(status, userId);
+
+        return bookings.stream().map(BookingMapper::mapBookingToBookingResponseDto).toList();
+    }
+
+    @Override
+    public List<BookingResponseDto> getBookingsByUser(UUID userId) {
+        List<Booking> bookings = bookingRepository.findAllByUser(userId);
+
+        return bookings.stream().map(BookingMapper::mapBookingToBookingResponseDto).toList();
+    }
+
+    private void checkUser(UUID userId) {
+        ResponseEntity<?> response;
+
+        try {
+            response = userServiceClient.getUserById(userId);
+        } catch (Exception e) {
+            throw new UserNotFound("Пользователь не найден");
+        }
+
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new UserNotFound("Пользователь не найден");
+        }
     }
 }

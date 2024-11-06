@@ -27,4 +27,6 @@ public interface BookingService {
     BookingResponseDto getBooking(UUID bookingId);
 
     List<BookingResponseDto> getBookingsByStatus(BookingStatus status, UUID userId);
+
+    List<BookingResponseDto> getBookingsByUser(UUID userId);
 }
