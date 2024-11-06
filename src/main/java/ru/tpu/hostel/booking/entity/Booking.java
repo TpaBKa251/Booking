@@ -53,7 +53,7 @@ public class Booking {
     @Enumerated(EnumType.STRING)
     private BookingType type;
 
-    @Column(name = "user")
+    @Column(name = "\"user\"")
     private UUID user;
 
     @ManyToOne

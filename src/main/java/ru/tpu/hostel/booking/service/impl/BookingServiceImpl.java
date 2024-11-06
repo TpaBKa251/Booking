@@ -13,6 +13,7 @@ import ru.tpu.hostel.booking.entity.Booking;
 import ru.tpu.hostel.booking.enums.BookingStatus;
 import ru.tpu.hostel.booking.enums.BookingType;
 import ru.tpu.hostel.booking.exception.BookingNotFoundException;
+import ru.tpu.hostel.booking.exception.InvalidTimeBookingException;
 import ru.tpu.hostel.booking.exception.UserNotFound;
 import ru.tpu.hostel.booking.mapper.BookingMapper;
 import ru.tpu.hostel.booking.repository.BookingRepository;
@@ -35,6 +36,9 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingResponseDto createBooking(BookingTimeLineRequestDto bookingTimeLineRequestDto, UUID userId) {
+        if (!bookingTimeLineRequestDto.bookingType().equals(BookingType.HALL)) {
+            throw new InvalidTimeBookingException("Вы не можете забронировать слотовую на кастомное время");
+        }
         checkUser(userId);
 
         return timeLineBookingWay.createBooking(bookingTimeLineRequestDto, userId);

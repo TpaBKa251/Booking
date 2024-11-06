@@ -38,3 +38,4 @@ services:
 
 networks:
   shared-network:
+    external: true
