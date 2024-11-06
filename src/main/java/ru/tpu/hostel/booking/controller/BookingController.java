@@ -14,6 +14,7 @@ import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequestDto;
 import ru.tpu.hostel.booking.dto.response.BookingResponseDto;
 import ru.tpu.hostel.booking.dto.response.BookingShortResponseDto;
 import ru.tpu.hostel.booking.dto.response.TimeSlotResponseDto;
+import ru.tpu.hostel.booking.enums.BookingStatus;
 import ru.tpu.hostel.booking.enums.BookingType;
 import ru.tpu.hostel.booking.service.BookingService;
 
@@ -51,5 +52,15 @@ public class BookingController {
     @PatchMapping("/cancel/{bookingId}/{userId}")
     public BookingResponseDto cancel(@PathVariable UUID bookingId, @PathVariable UUID userId) {
         return bookingService.cancelBooking(bookingId, userId);
+    }
+
+    @GetMapping("/get/all/{status}/{userId}")
+    public List<BookingResponseDto> getAllByStatus(@PathVariable BookingStatus status, @PathVariable UUID userId) {
+        return bookingService.getBookingsByStatus(status, userId);
+    }
+
+    @GetMapping("/get/all/{userId}")
+    public List<BookingResponseDto> getAllByUserId(@PathVariable UUID userId) {
+        return bookingService.getBookingsByUser(userId);
     }
 }

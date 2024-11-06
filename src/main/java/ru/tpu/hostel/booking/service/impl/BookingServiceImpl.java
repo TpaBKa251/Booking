@@ -80,6 +80,8 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingResponseDto> getBookingsByStatus(BookingStatus status, UUID userId) {
+        checkUser(userId);
+
         List<Booking> bookings = bookingRepository.findAllByStatusAndUser(status, userId);
 
         return bookings.stream().map(BookingMapper::mapBookingToBookingResponseDto).toList();
@@ -87,6 +89,8 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingResponseDto> getBookingsByUser(UUID userId) {
+        checkUser(userId);
+
         List<Booking> bookings = bookingRepository.findAllByUser(userId);
 
         return bookings.stream().map(BookingMapper::mapBookingToBookingResponseDto).toList();
