@@ -16,6 +16,7 @@ import ru.tpu.hostel.booking.mapper.BookingMapper;
 import ru.tpu.hostel.booking.mapper.SlotMapper;
 import ru.tpu.hostel.booking.repository.BookingRepository;
 import ru.tpu.hostel.booking.repository.TimeSlotRepository;
+import ru.tpu.hostel.booking.utils.TimeNow;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -42,7 +43,7 @@ public class TimeSlotBookingWay {
             throw new SlotAlreadyBookedException("Слот уже забронирован");
         }
 
-        if (timeSlot.getStartTime().isBefore(LocalDateTime.now())) {
+        if (timeSlot.getStartTime().isBefore(TimeNow.now())) {
             throw new InvalidTimeBookingException("Вы можете забронировать только слоты,"
                     + " время начала которых позже текущего времени");
         }
@@ -60,7 +61,7 @@ public class TimeSlotBookingWay {
     }
 
     public List<TimeSlotResponseDto> getAvailableTimeSlots(LocalDate date, BookingType bookingType) {
-        if (LocalDate.now().plusDays(7).isBefore(date) || date.isBefore(LocalDate.now())) {
+        if (LocalDate.now().plusDays(7).isBefore(date) || date.isBefore(TimeNow.now().toLocalDate())) {
             throw new InvalidTimeBookingException("Вы можете просматривать и бронировать слоты только на неделю вперед");
         }
 
@@ -70,7 +71,7 @@ public class TimeSlotBookingWay {
 
         for (TimeSlot timeSlot : timeSlots) {
             if (timeSlot.getStartTime().toLocalDate().equals(date)
-                    && timeSlot.getStartTime().isAfter(LocalDateTime.now())
+                    && timeSlot.getStartTime().isAfter(TimeNow.now())
             ) {
                 List<Booking> bookings = bookingRepository.findAllByTimeSlot(timeSlot);
 

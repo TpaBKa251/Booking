@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import ru.tpu.hostel.booking.entity.TimeSlot;
 import ru.tpu.hostel.booking.enums.BookingType;
 import ru.tpu.hostel.booking.repository.TimeSlotRepository;
+import ru.tpu.hostel.booking.utils.TimeNow;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,7 +30,7 @@ public class GymTimeSlotInitializer {
 
     @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Tomsk")
     public void generateGymTimeSlotsOnLastDay() {
-        LocalDateTime startTime = getNextGymSlotStart(LocalDate.now().plusDays(7).atTime(10, 0));
+        LocalDateTime startTime = getNextGymSlotStart(TimeNow.now().toLocalDate().plusDays(7).atTime(10, 0));
 
         for (int i = 0; i < 6; i++) {
             TimeSlot slot = new TimeSlot();
@@ -44,7 +45,7 @@ public class GymTimeSlotInitializer {
     }
 
     public void addMissingGymSlots() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = TimeNow.now();
         LocalDateTime endOfWeek = now.toLocalDate().plusDays(8).atTime(10, 0);
 
         TimeSlot lastSlot = timeSlotRepository.findLastByType(BookingType.GYM).orElse(null);

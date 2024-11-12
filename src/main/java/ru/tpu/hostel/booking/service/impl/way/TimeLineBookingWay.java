@@ -11,6 +11,7 @@ import ru.tpu.hostel.booking.enums.BookingType;
 import ru.tpu.hostel.booking.exception.InvalidTimeBookingException;
 import ru.tpu.hostel.booking.mapper.BookingMapper;
 import ru.tpu.hostel.booking.repository.BookingRepository;
+import ru.tpu.hostel.booking.utils.TimeNow;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -30,8 +31,8 @@ public class TimeLineBookingWay {
 
     public BookingResponseDto createBooking(BookingTimeLineRequestDto bookingTimeLineRequestDto, UUID userId) {
         if (
-                bookingTimeLineRequestDto.startTime().isBefore(LocalDateTime.now())
-                        || bookingTimeLineRequestDto.endTime().isBefore(LocalDateTime.now())
+                bookingTimeLineRequestDto.startTime().isBefore(TimeNow.now())
+                        || bookingTimeLineRequestDto.endTime().isBefore(TimeNow.now())
         ) {
             throw new InvalidTimeBookingException("Неверное время бронирования");
         }
@@ -87,7 +88,7 @@ public class TimeLineBookingWay {
     }
 
     public List<BookingShortResponseDto> getAvailableTimeBookings(LocalDate date, BookingType bookingType) {
-        if (LocalDate.now().plusDays(7).isBefore(date) || date.isBefore(LocalDate.now())) {
+        if (LocalDate.now().plusDays(7).isBefore(date) || date.isBefore(TimeNow.now().toLocalDate())) {
             throw new InvalidTimeBookingException("Вы можете просматривать и бронировать только на неделю вперед");
         }
 
@@ -106,10 +107,10 @@ public class TimeLineBookingWay {
 
         LocalTime currentStartTime;
 
-        if (!date.equals(LocalDate.now())) {
+        if (!date.equals(TimeNow.now().toLocalDate())) {
             currentStartTime = startBookingTime;
         } else {
-            currentStartTime = LocalTime.now()
+            currentStartTime = TimeNow.now().toLocalTime()
                     .plusHours(1)
                     .withMinute(0)
                     .withSecond(0)

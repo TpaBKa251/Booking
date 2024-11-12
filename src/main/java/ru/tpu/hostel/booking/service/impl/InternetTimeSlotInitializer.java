@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import ru.tpu.hostel.booking.entity.TimeSlot;
 import ru.tpu.hostel.booking.enums.BookingType;
 import ru.tpu.hostel.booking.repository.TimeSlotRepository;
+import ru.tpu.hostel.booking.utils.TimeNow;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -29,8 +30,7 @@ public class InternetTimeSlotInitializer {
 
     @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Tomsk")
     public void generateTimeSlotsOnLastDay() {
-        LocalDateTime startTime = LocalDateTime
-                .now()
+        LocalDateTime startTime = TimeNow.now()
                 .withSecond(0)
                 .withNano(0)
                 .plusDays(7)
@@ -49,7 +49,7 @@ public class InternetTimeSlotInitializer {
     }
 
     public void addMissingSlots() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = TimeNow.now();
         LocalDateTime endOfWeek = now.toLocalDate().plusDays(8).atStartOfDay().plusHours(20);
 
         TimeSlot lastSlot = timeSlotRepository.findLastByType(BookingType.INTERNET).orElse(null);

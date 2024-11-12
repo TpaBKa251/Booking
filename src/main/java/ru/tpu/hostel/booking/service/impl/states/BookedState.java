@@ -5,6 +5,7 @@ import ru.tpu.hostel.booking.entity.Booking;
 import ru.tpu.hostel.booking.enums.BookingStatus;
 import ru.tpu.hostel.booking.repository.BookingRepository;
 import ru.tpu.hostel.booking.service.state.BookingState;
+import ru.tpu.hostel.booking.utils.TimeNow;
 
 import java.time.LocalDateTime;
 
@@ -13,7 +14,7 @@ public class BookedState implements BookingState {
 
     @Override
     public void updateStatus(Booking booking, BookingRepository bookingRepository) {
-        if (booking.getStartTime().isBefore(LocalDateTime.now())) {
+        if (booking.getStartTime().isBefore(TimeNow.now())) {
             booking.setStatus(BookingStatus.IN_PROGRESS);
             bookingRepository.save(booking);
         }
