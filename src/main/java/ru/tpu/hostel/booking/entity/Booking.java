@@ -26,14 +26,14 @@ import ru.tpu.hostel.booking.service.state.BookingState;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Table(name = "booking")
+@Table(name = "booking", schema = "booking") // Указание схемы
 @Entity
 @Getter
 @Setter
 public class Booking {
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id")
     private UUID id;
 
     @Column(nullable = false, name = "start_time")
@@ -42,22 +42,22 @@ public class Booking {
     @Column(nullable = false, name = "end_time")
     private LocalDateTime endTime;
 
-    @Column(name = "status")
     @Enumerated(EnumType.STRING)
+    @Column(name = "status")
     private BookingStatus status;
 
     @Transient
     private BookingState bookingState;
 
-    @Column(name = "\"type\"")
     @Enumerated(EnumType.STRING)
+    @Column(name = "type")
     private BookingType type;
 
-    @Column(name = "\"user\"")
+    @Column(name = "\"user\"", nullable = true) // Поле user остается как UUID
     private UUID user;
 
     @ManyToOne
-    @JoinColumn(referencedColumnName = "id", name = "time_slot_id")
+    @JoinColumn(name = "time_slot_id", referencedColumnName = "id", nullable = false) // Ссылка на TimeSlot
     private TimeSlot timeSlot;
 
     @PostLoad

@@ -1,18 +1,5 @@
 version: '3.9'
 services:
-  postgres:
-    container_name: bookingDB
-    image: postgres:15
-    hostname: bookingDB
-    environment:
-      - POSTGRES_DB=bookingService
-      - POSTGRES_USER=booking
-      - POSTGRES_PASSWORD=ilia
-    ports:
-      - "5433:5432"
-    networks:
-      - shared-network
-
   bookingservice:
     container_name: bookingservice
     build:
@@ -21,11 +8,9 @@ services:
     hostname: bookingservice
     ports:
       - "8082:8080"
-    depends_on:
-      - postgres
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://bookingDB:5432/bookingService
-      - SPRING_DATASOURCE_USERNAME=booking
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://hostelDB:5432/hostelService
+      - SPRING_DATASOURCE_USERNAME=hostel
       - SPRING_DATASOURCE_PASSWORD=ilia
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]

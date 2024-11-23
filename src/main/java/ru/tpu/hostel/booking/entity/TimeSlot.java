@@ -16,10 +16,11 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "time_slots")
+@Table(name = "time_slots", schema = "booking")
 @Getter
 @Setter
 public class TimeSlot {
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
@@ -30,10 +31,10 @@ public class TimeSlot {
     @Column(nullable = false, name = "end_time")
     private LocalDateTime endTime;
 
-    @Column(name = "type")
     @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false)
     private BookingType type;
 
-    @Column(name = "\"limit\"")
+    @Column(name = "\"limit\"", nullable = false)
     private Integer limit;
 }
