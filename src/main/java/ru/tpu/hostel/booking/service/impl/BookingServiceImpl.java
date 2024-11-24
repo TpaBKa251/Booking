@@ -39,14 +39,14 @@ public class BookingServiceImpl implements BookingService {
         if (!bookingTimeLineRequestDto.bookingType().equals(BookingType.HALL)) {
             throw new InvalidTimeBookingException("Вы не можете забронировать слотовую на кастомное время");
         }
-        checkUser(userId);
+        //checkUser(userId);
 
         return timeLineBookingWay.createBooking(bookingTimeLineRequestDto, userId);
     }
 
     @Override
     public BookingResponseDto createBooking(BookingTimeSlotRequestDto bookingTimeSlotRequestDto, UUID userId) {
-        checkUser(userId);
+        //checkUser(userId);
 
         return timeSlotBookingWay.createBooking(bookingTimeSlotRequestDto, userId);
     }
@@ -84,7 +84,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingResponseDto> getBookingsByStatus(BookingStatus status, UUID userId) {
-        checkUser(userId);
+        //checkUser(userId);
 
         List<Booking> bookings = bookingRepository.findAllByStatusAndUser(status, userId);
 
@@ -93,7 +93,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingResponseDto> getBookingsByUser(UUID userId) {
-        checkUser(userId);
+        //checkUser(userId);
 
         List<Booking> bookings = bookingRepository.findAllByUser(userId);
 

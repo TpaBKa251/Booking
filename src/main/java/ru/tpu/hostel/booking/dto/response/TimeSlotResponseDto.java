@@ -5,7 +5,6 @@ import java.util.UUID;
 
 public record TimeSlotResponseDto(
         UUID id,
-        LocalDateTime startTime,
-        LocalDateTime endTime
+        String time
 ) {
 }
