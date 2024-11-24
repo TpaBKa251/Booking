@@ -19,11 +19,8 @@ import ru.tpu.hostel.booking.repository.TimeSlotRepository;
 import ru.tpu.hostel.booking.utils.TimeNow;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -37,7 +34,10 @@ public class TimeSlotBookingWay {
         TimeSlot timeSlot = timeSlotRepository.findById(bookingTimeSlotRequestDto.slotId())
                 .orElseThrow(() -> new SlotNotFoundException("Слот не найден"));
 
-        List<Booking> bookings = bookingRepository.findAllByTimeSlot(timeSlot);
+        List<Booking> bookings = bookingRepository.findAllByTimeSlot(timeSlot)
+                .stream()
+                .filter(booking -> booking.getStatus() != BookingStatus.CANCELLED)
+                .toList();
 
         if (bookings.size() == timeSlot.getLimit()) {
             throw new SlotAlreadyBookedException("Слот уже забронирован");
@@ -73,7 +73,10 @@ public class TimeSlotBookingWay {
             if (timeSlot.getStartTime().toLocalDate().equals(date)
                     && timeSlot.getStartTime().isAfter(TimeNow.now())
             ) {
-                List<Booking> bookings = bookingRepository.findAllByTimeSlot(timeSlot);
+                List<Booking> bookings = bookingRepository.findAllByTimeSlot(timeSlot)
+                        .stream()
+                        .filter(booking -> booking.getStatus() != BookingStatus.CANCELLED)
+                        .toList();
 
                 if (bookings.size() < timeSlot.getLimit()) {
                     availableSlots.add(SlotMapper.mapTimeSlotToTimeSlotResponseDto(timeSlot));

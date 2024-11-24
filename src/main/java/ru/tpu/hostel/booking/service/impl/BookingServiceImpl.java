@@ -63,13 +63,13 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingResponseDto cancelBooking(UUID bookingId, UUID userId) {
-        checkUser(userId);
+        //checkUser(userId);
 
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException("Бронь не найдена"));
 
         if (!booking.getUser().equals(userId)) {
-            throw new BookingNotFoundException("Бронь не найдена");
+            throw new BookingNotFoundException("Вы не можете закрывать чужие брони");
         }
 
         booking.getBookingState().cancelBooking(booking, bookingRepository);

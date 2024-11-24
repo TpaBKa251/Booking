@@ -86,7 +86,7 @@ public class GlobalExceptionHandler {
         errorResponse.put("code", "422");
         errorResponse.put("message", ex.getMessage());
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

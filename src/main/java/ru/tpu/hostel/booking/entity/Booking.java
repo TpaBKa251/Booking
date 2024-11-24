@@ -53,7 +53,7 @@ public class Booking {
     @Column(name = "type")
     private BookingType type;
 
-    @Column(name = "\"user\"", nullable = true) // Поле user остается как UUID
+    @Column(name = "\"user\"")
     private UUID user;
 
     @ManyToOne
