@@ -57,7 +57,7 @@ public class Booking {
     private UUID user;
 
     @ManyToOne
-    @JoinColumn(name = "time_slot_id", referencedColumnName = "id", nullable = false) // Ссылка на TimeSlot
+    @JoinColumn(name = "time_slot_id", referencedColumnName = "id") // Ссылка на TimeSlot
     private TimeSlot timeSlot;
 
     @PostLoad
