@@ -21,7 +21,7 @@ public class BookingMapper {
                 booking.getStartTime(),
                 booking.getEndTime(),
                 booking.getStatus(),
-                booking.getType()
+                booking.getType().getBookingTypeName()
         );
     }
 }

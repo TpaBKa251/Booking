@@ -11,6 +11,6 @@ public record BookingResponseDto(
         LocalDateTime startTime,
         LocalDateTime endTime,
         BookingStatus status,
-        BookingType type
+        String type
 ) {
 }
