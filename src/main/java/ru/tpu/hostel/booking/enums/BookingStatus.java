@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 public enum BookingStatus {
     NOT_BOOKED("Не забронировано"),
-    BOOKED("Забронировано"),
+    BOOKED("Предстоящее"),
     IN_PROGRESS("В процессе"),
     CANCELLED("Отменено"),
     COMPLETED("Завершено");
