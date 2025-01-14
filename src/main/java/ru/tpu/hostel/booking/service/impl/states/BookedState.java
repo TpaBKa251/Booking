@@ -7,8 +7,6 @@ import ru.tpu.hostel.booking.repository.BookingRepository;
 import ru.tpu.hostel.booking.service.state.BookingState;
 import ru.tpu.hostel.booking.utils.TimeNow;
 
-import java.time.LocalDateTime;
-
 @Service
 public class BookedState implements BookingState {
 

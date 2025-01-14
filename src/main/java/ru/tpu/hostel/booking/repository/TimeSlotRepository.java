@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 import ru.tpu.hostel.booking.entity.TimeSlot;
 import ru.tpu.hostel.booking.enums.BookingType;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,4 +18,6 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, UUID> {
     Optional<TimeSlot> findLastByType(BookingType bookingType);
 
     List<TimeSlot> findByType(BookingType bookingType);
+
+    List<TimeSlot> findAllByTypeAndStartTimeAfter(BookingType bookingType, LocalDateTime startTime);
 }

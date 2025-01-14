@@ -20,7 +20,7 @@ public interface BookingService {
 
     List<BookingShortResponseDto> getAvailableTimeBookings(LocalDate date, BookingType bookingType);
 
-    List<TimeSlotResponseDto> getAvailableTimeBooking(LocalDate date, BookingType bookingType);
+    List<TimeSlotResponseDto> getAvailableTimeBooking(LocalDate date, BookingType bookingType, UUID userId);
 
     BookingResponseDto cancelBooking(UUID bookingId, UUID userId);
 

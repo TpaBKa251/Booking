@@ -34,10 +34,7 @@ public class TimeSlotBookingWay {
         TimeSlot timeSlot = timeSlotRepository.findById(bookingTimeSlotRequestDto.slotId())
                 .orElseThrow(() -> new SlotNotFoundException("Слот не найден"));
 
-        List<Booking> bookings = bookingRepository.findAllByTimeSlot(timeSlot)
-                .stream()
-                .filter(booking -> booking.getStatus() != BookingStatus.CANCELLED)
-                .toList();
+        List<Booking> bookings = bookingRepository.findAllByStatusNotAndTimeSlot(BookingStatus.CANCELLED, timeSlot);
 
         if (bookings.size() == timeSlot.getLimit()) {
             throw new SlotAlreadyBookedException("Слот уже забронирован");
@@ -46,6 +43,11 @@ public class TimeSlotBookingWay {
         if (timeSlot.getStartTime().isBefore(TimeNow.now())) {
             throw new InvalidTimeBookingException("Вы можете забронировать только слоты,"
                     + " время начала которых позже текущего времени");
+        }
+
+        // Возможно это не надо
+        if (bookingRepository.findByTimeSlotAndUser(timeSlot, userId).isPresent()) {
+            throw new InvalidTimeBookingException("Вы не можете забронировать слот повторно");
         }
 
         Booking booking = new Booking();
@@ -60,7 +62,7 @@ public class TimeSlotBookingWay {
         return BookingMapper.mapBookingToBookingResponseDto(booking);
     }
 
-    public List<TimeSlotResponseDto> getAvailableTimeSlots(LocalDate date, BookingType bookingType) {
+    public List<TimeSlotResponseDto> getAvailableTimeSlots(LocalDate date, BookingType bookingType, UUID userId) {
         if (LocalDate.now().plusDays(7).isBefore(date) || date.isBefore(TimeNow.now().toLocalDate())) {
             throw new InvalidTimeBookingException("Вы можете просматривать и бронировать слоты только на неделю вперед");
         }
@@ -76,6 +78,7 @@ public class TimeSlotBookingWay {
                 List<Booking> bookings = bookingRepository.findAllByTimeSlot(timeSlot)
                         .stream()
                         .filter(booking -> booking.getStatus() != BookingStatus.CANCELLED)
+                        .filter(booking -> !booking.getUser().equals(userId)) // возможно не надо
                         .toList();
 
                 if (bookings.size() < timeSlot.getLimit()) {

@@ -32,6 +32,10 @@ public class BookingController {
 
     private final BookingService bookingService;
 
+    /**
+     * @deprecated убрана возможность брони по таймлайну
+     */
+    @Deprecated
     @PostMapping("/timeline/{userId}")
     public BookingResponseDto book(@RequestBody @Valid BookingTimeLineRequestDto bookingTimeLineRequestDto, @PathVariable UUID userId) {
         log.info(LocalDateTime.now().toString());
@@ -44,14 +48,18 @@ public class BookingController {
         return bookingService.createBooking(bookingTimeSlotRequestDto, userId);
     }
 
+    /**
+     * @deprecated убрана возможность брони по таймлайну
+     */
+    @Deprecated
     @GetMapping("/available/timeline/{date}/{bookingType}")
     public List<BookingShortResponseDto> getAvailableTimeBookings(@PathVariable LocalDate date, @PathVariable BookingType bookingType) {
         return bookingService.getAvailableTimeBookings(date, bookingType);
     }
 
-    @GetMapping("/available/timeslot/{date}/{bookingType}")
-    public List<TimeSlotResponseDto> getAvailableTimeBooking(@PathVariable LocalDate date, @PathVariable BookingType bookingType) {
-        return bookingService.getAvailableTimeBooking(date, bookingType);
+    @GetMapping("/available/timeslot/{date}/{bookingType}/{userId}")
+    public List<TimeSlotResponseDto> getAvailableTimeBooking(@PathVariable LocalDate date, @PathVariable BookingType bookingType, @PathVariable UUID userId) {
+        return bookingService.getAvailableTimeBooking(date, bookingType, userId);
     }
 
     @PatchMapping("/cancel/{bookingId}/{userId}")

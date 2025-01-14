@@ -34,6 +34,10 @@ public class BookingServiceImpl implements BookingService {
     private final TimeSlotBookingWay timeSlotBookingWay;
     private final UserServiceClient userServiceClient;
 
+    /**
+     * @deprecated убрана возможность брони по таймлайну
+     */
+    @Deprecated
     @Override
     public BookingResponseDto createBooking(BookingTimeLineRequestDto bookingTimeLineRequestDto, UUID userId) {
         if (!bookingTimeLineRequestDto.bookingType().equals(BookingType.HALL)) {
@@ -51,14 +55,18 @@ public class BookingServiceImpl implements BookingService {
         return timeSlotBookingWay.createBooking(bookingTimeSlotRequestDto, userId);
     }
 
+    /**
+     * @deprecated убрана возможность брони по таймлайну
+     */
+    @Deprecated
     @Override
     public List<BookingShortResponseDto> getAvailableTimeBookings(LocalDate date, BookingType bookingType) {
         return timeLineBookingWay.getAvailableTimeBookings(date, bookingType);
     }
 
     @Override
-    public List<TimeSlotResponseDto> getAvailableTimeBooking(LocalDate date, BookingType bookingType) {
-        return timeSlotBookingWay.getAvailableTimeSlots(date, bookingType);
+    public List<TimeSlotResponseDto> getAvailableTimeBooking(LocalDate date, BookingType bookingType, UUID userId) {
+        return timeSlotBookingWay.getAvailableTimeSlots(date, bookingType, userId);
     }
 
     @Override
@@ -66,7 +74,7 @@ public class BookingServiceImpl implements BookingService {
         //checkUser(userId);
 
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new BookingNotFoundException("Бронь не найдена"));
+                .orElseThrow(BookingNotFoundException::new);
 
         if (!booking.getUser().equals(userId)) {
             throw new BookingNotFoundException("Вы не можете закрывать чужие брони");
@@ -79,7 +87,8 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingResponseDto getBooking(UUID bookingId) {
-        return null;
+        return BookingMapper.mapBookingToBookingResponseDto(bookingRepository.findById(bookingId)
+                        .orElseThrow(BookingNotFoundException::new));
     }
 
     @Override
@@ -100,6 +109,10 @@ public class BookingServiceImpl implements BookingService {
         return bookings.stream().map(BookingMapper::mapBookingToBookingResponseDto).toList();
     }
 
+    /**
+     * @deprecated функционал перенесен в API Gateway
+     */
+    @Deprecated
     private void checkUser(UUID userId) {
         ResponseEntity<?> response;
 

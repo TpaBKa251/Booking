@@ -23,8 +23,7 @@ public class BookingStateImpl {
         return args -> updateBookingStatuses();
     }
 
-    @Scheduled(cron = "0 0 6-19 * * ?", zone = "Asia/Tomsk")
-    @Scheduled(cron = "0 0/10 20-23,0-0 * * ?", zone = "Asia/Tomsk")
+    @Scheduled(cron = "0 0/10 * * * ?", zone = "Asia/Tomsk")
     public void updateBookingStatuses() {
         List<Booking> bookings = bookingRepository.findAll();
 

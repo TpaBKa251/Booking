@@ -12,6 +12,9 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://hostelDB:5432/hostelService
       - SPRING_DATASOURCE_USERNAME=hostel
       - SPRING_DATASOURCE_PASSWORD=ilia
+      - SCHEDULES_FILE_PATH=/app/config/schedules.json
+    volumes:
+      - ./src/main/java/ru/tpu/hostel/booking/service/schedules/schedules.json:/app/config/schedules.json
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 10s
