@@ -80,6 +80,10 @@ public class TimeSlotBookingWay {
                         .filter(booking -> booking.getStatus() != BookingStatus.CANCELLED)
                         .toList();
 
+                if (bookings.stream().anyMatch(b -> b.getUser().equals(userId))) {
+                    continue;
+                }
+
                 if (bookings.size() < timeSlot.getLimit()) {
                     availableSlots.add(SlotMapper.mapTimeSlotToTimeSlotResponseDto(timeSlot));
                 }
