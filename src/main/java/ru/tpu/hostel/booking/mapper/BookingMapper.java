@@ -2,6 +2,7 @@ package ru.tpu.hostel.booking.mapper;
 
 import org.springframework.stereotype.Component;
 import ru.tpu.hostel.booking.dto.response.BookingResponseDto;
+import ru.tpu.hostel.booking.dto.response.BookingResponseWithUserDto;
 import ru.tpu.hostel.booking.dto.response.BookingShortResponseDto;
 import ru.tpu.hostel.booking.entity.Booking;
 
@@ -18,6 +19,17 @@ public class BookingMapper {
     public static BookingResponseDto mapBookingToBookingResponseDto(Booking booking) {
         return new BookingResponseDto(
                 booking.getId(),
+                booking.getStartTime(),
+                booking.getEndTime(),
+                booking.getStatus(),
+                booking.getType().getBookingTypeName()
+        );
+    }
+
+    public static BookingResponseWithUserDto mapBookingToBookingResponseWithUserDto(Booking booking) {
+        return new BookingResponseWithUserDto(
+                booking.getId(),
+                booking.getUser(),
                 booking.getStartTime(),
                 booking.getEndTime(),
                 booking.getStatus(),

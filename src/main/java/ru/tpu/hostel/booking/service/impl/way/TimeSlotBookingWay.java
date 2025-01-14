@@ -78,7 +78,6 @@ public class TimeSlotBookingWay {
                 List<Booking> bookings = bookingRepository.findAllByTimeSlot(timeSlot)
                         .stream()
                         .filter(booking -> booking.getStatus() != BookingStatus.CANCELLED)
-                        .filter(booking -> !booking.getUser().equals(userId)) // возможно не надо
                         .toList();
 
                 if (bookings.size() < timeSlot.getLimit()) {

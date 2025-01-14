@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -14,4 +15,7 @@ public interface UserServiceClient {
 
     @GetMapping("/users/get/by/id/{id}")
     ResponseEntity<?> getUserById(@PathVariable UUID id);
+
+    @GetMapping("/roles/get/user/roles/all/{userId}")
+    List<String> getAllRolesByUserId(@PathVariable UUID userId);
 }

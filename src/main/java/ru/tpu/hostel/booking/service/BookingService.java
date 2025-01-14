@@ -3,6 +3,7 @@ package ru.tpu.hostel.booking.service;
 import ru.tpu.hostel.booking.dto.request.BookingTimeLineRequestDto;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequestDto;
 import ru.tpu.hostel.booking.dto.response.BookingResponseDto;
+import ru.tpu.hostel.booking.dto.response.BookingResponseWithUserDto;
 import ru.tpu.hostel.booking.dto.response.BookingShortResponseDto;
 import ru.tpu.hostel.booking.dto.response.TimeSlotResponseDto;
 import ru.tpu.hostel.booking.enums.BookingStatus;
@@ -29,4 +30,8 @@ public interface BookingService {
     List<BookingResponseDto> getBookingsByStatus(BookingStatus status, UUID userId);
 
     List<BookingResponseDto> getBookingsByUser(UUID userId);
+
+    List<BookingResponseWithUserDto> getBookingsByTypeAndDate(BookingType bookingType, LocalDate date);
+
+    List<BookingResponseWithUserDto> getBookingsByDate(LocalDate date);
 }

@@ -1,12 +1,14 @@
 package ru.tpu.hostel.booking.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import ru.tpu.hostel.booking.client.UserServiceClient;
 import ru.tpu.hostel.booking.dto.request.BookingTimeLineRequestDto;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequestDto;
 import ru.tpu.hostel.booking.dto.response.BookingResponseDto;
+import ru.tpu.hostel.booking.dto.response.BookingResponseWithUserDto;
 import ru.tpu.hostel.booking.dto.response.BookingShortResponseDto;
 import ru.tpu.hostel.booking.dto.response.TimeSlotResponseDto;
 import ru.tpu.hostel.booking.entity.Booking;
@@ -25,6 +27,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
@@ -77,6 +80,21 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(BookingNotFoundException::new);
 
         if (!booking.getUser().equals(userId)) {
+            List<String> userRoles = userServiceClient.getAllRolesByUserId(userId);
+
+            log.info(userRoles.toString());
+
+            for (String userRole : userRoles) {
+                if (userRole.contains(booking.getType().toString())
+                || userRole.contains("HOSTEL_SUPERVISOR")
+                || userRole.contains("ADMINISTRATION")) {
+                    log.info("{}, прошли", userRole);
+                    booking.getBookingState().cancelBooking(booking, bookingRepository);
+
+                    return BookingMapper.mapBookingToBookingResponseDto(booking);
+                }
+            }
+
             throw new BookingNotFoundException("Вы не можете закрывать чужие брони");
         }
 
@@ -88,7 +106,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponseDto getBooking(UUID bookingId) {
         return BookingMapper.mapBookingToBookingResponseDto(bookingRepository.findById(bookingId)
-                        .orElseThrow(BookingNotFoundException::new));
+                .orElseThrow(BookingNotFoundException::new));
     }
 
     @Override
@@ -107,6 +125,29 @@ public class BookingServiceImpl implements BookingService {
         List<Booking> bookings = bookingRepository.findAllByUser(userId);
 
         return bookings.stream().map(BookingMapper::mapBookingToBookingResponseDto).toList();
+    }
+
+    @Override
+    public List<BookingResponseWithUserDto> getBookingsByTypeAndDate(BookingType bookingType, LocalDate date) {
+        return bookingRepository.findAllByTypeAndStartTimeOnSpecificDay(
+                        bookingType,
+                        date.atTime(0, 0, 0),
+                        date.atTime(23, 59, 59)
+                )
+                .stream()
+                .map(BookingMapper::mapBookingToBookingResponseWithUserDto)
+                .toList();
+    }
+
+    @Override
+    public List<BookingResponseWithUserDto> getBookingsByDate(LocalDate date) {
+        return bookingRepository.findAllBookingsOnSpecificDay(
+                        date.atTime(0, 0, 0),
+                        date.atTime(23, 59, 59)
+                )
+                .stream()
+                .map(BookingMapper::mapBookingToBookingResponseWithUserDto)
+                .toList();
     }
 
     /**

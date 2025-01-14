@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.tpu.hostel.booking.dto.request.BookingTimeLineRequestDto;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequestDto;
 import ru.tpu.hostel.booking.dto.response.BookingResponseDto;
+import ru.tpu.hostel.booking.dto.response.BookingResponseWithUserDto;
 import ru.tpu.hostel.booking.dto.response.BookingShortResponseDto;
 import ru.tpu.hostel.booking.dto.response.TimeSlotResponseDto;
 import ru.tpu.hostel.booking.enums.BookingStatus;
@@ -67,13 +68,23 @@ public class BookingController {
         return bookingService.cancelBooking(bookingId, userId);
     }
 
-    @GetMapping("/get/all/{status}/{userId}")
+    @GetMapping("/get/all/by/status/user/{status}/{userId}")
     public List<BookingResponseDto> getAllByStatus(@PathVariable BookingStatus status, @PathVariable UUID userId) {
         return bookingService.getBookingsByStatus(status, userId);
     }
 
-    @GetMapping("/get/all/{userId}")
+    @GetMapping("/get/all/by/user/{userId}")
     public List<BookingResponseDto> getAllByUserId(@PathVariable UUID userId) {
         return bookingService.getBookingsByUser(userId);
+    }
+
+    @GetMapping("/get/all/by/type/date/{type}/{date}")
+    public List<BookingResponseWithUserDto> getAllByTypeAndDate(@PathVariable BookingType type, @PathVariable LocalDate date) {
+        return bookingService.getBookingsByTypeAndDate(type, date);
+    }
+
+    @GetMapping("/get/all/by/date/{date}")
+    public List<BookingResponseWithUserDto> getAllByDate(@PathVariable LocalDate date) {
+        return bookingService.getBookingsByDate(date);
     }
 }
