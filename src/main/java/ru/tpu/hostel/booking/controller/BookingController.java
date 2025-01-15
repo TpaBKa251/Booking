@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.tpu.hostel.booking.dto.request.BookingTimeLineRequestDto;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequestDto;
+import ru.tpu.hostel.booking.dto.response.AvailableTimeSlotsWithResponsible;
 import ru.tpu.hostel.booking.dto.response.BookingResponseDto;
 import ru.tpu.hostel.booking.dto.response.BookingResponseWithUserDto;
 import ru.tpu.hostel.booking.dto.response.BookingShortResponseDto;
@@ -59,7 +60,7 @@ public class BookingController {
     }
 
     @GetMapping("/available/timeslot/{date}/{bookingType}/{userId}")
-    public List<TimeSlotResponseDto> getAvailableTimeBooking(@PathVariable LocalDate date, @PathVariable BookingType bookingType, @PathVariable UUID userId) {
+    public AvailableTimeSlotsWithResponsible getAvailableTimeBooking(@PathVariable LocalDate date, @PathVariable BookingType bookingType, @PathVariable UUID userId) {
         return bookingService.getAvailableTimeBooking(date, bookingType, userId);
     }
 

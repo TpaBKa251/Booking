@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Setter
 @Getter
@@ -22,6 +23,7 @@ public class SchedulesConfig {
     public static class Schedule {
         private String type;
         private int limit;
+        private UUID responsible;
         private List<String> workingDays;
         private TimeRange workingHours;
         private int slotDurationMinutes;

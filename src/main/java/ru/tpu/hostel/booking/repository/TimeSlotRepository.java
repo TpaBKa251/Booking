@@ -2,7 +2,9 @@ package ru.tpu.hostel.booking.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import ru.tpu.hostel.booking.entity.Booking;
 import ru.tpu.hostel.booking.entity.TimeSlot;
 import ru.tpu.hostel.booking.enums.BookingType;
 
@@ -20,4 +22,10 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, UUID> {
     List<TimeSlot> findByType(BookingType bookingType);
 
     List<TimeSlot> findAllByTypeAndStartTimeAfter(BookingType bookingType, LocalDateTime startTime);
+
+    @Query("SELECT t.startTime FROM TimeSlot t WHERE t.type = :type AND t.startTime >= :startDate AND t.startTime < :endDate order by t.startTime limit 1")
+    Optional<LocalDateTime> findOneByTypeAndStartTimeOnSpecificDay(
+            @Param("type") BookingType type,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
 }

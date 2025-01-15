@@ -3,6 +3,7 @@ package ru.tpu.hostel.booking.service.impl.way;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequestDto;
+import ru.tpu.hostel.booking.dto.response.AvailableTimeSlotsWithResponsible;
 import ru.tpu.hostel.booking.dto.response.BookingResponseDto;
 import ru.tpu.hostel.booking.dto.response.TimeSlotResponseDto;
 import ru.tpu.hostel.booking.entity.Booking;
@@ -15,6 +16,7 @@ import ru.tpu.hostel.booking.exception.SlotNotFoundException;
 import ru.tpu.hostel.booking.mapper.BookingMapper;
 import ru.tpu.hostel.booking.mapper.SlotMapper;
 import ru.tpu.hostel.booking.repository.BookingRepository;
+import ru.tpu.hostel.booking.repository.ResponsibleRepository;
 import ru.tpu.hostel.booking.repository.TimeSlotRepository;
 import ru.tpu.hostel.booking.utils.TimeNow;
 
@@ -29,6 +31,7 @@ public class TimeSlotBookingWay {
 
     private final TimeSlotRepository timeSlotRepository;
     private final BookingRepository bookingRepository;
+    private final ResponsibleRepository responsibleRepository;
 
     public BookingResponseDto createBooking(BookingTimeSlotRequestDto bookingTimeSlotRequestDto, UUID userId) {
         TimeSlot timeSlot = timeSlotRepository.findById(bookingTimeSlotRequestDto.slotId())
@@ -62,7 +65,7 @@ public class TimeSlotBookingWay {
         return BookingMapper.mapBookingToBookingResponseDto(booking);
     }
 
-    public List<TimeSlotResponseDto> getAvailableTimeSlots(LocalDate date, BookingType bookingType, UUID userId) {
+    public AvailableTimeSlotsWithResponsible getAvailableTimeSlots(LocalDate date, BookingType bookingType, UUID userId) {
         if (LocalDate.now().plusDays(7).isBefore(date) || date.isBefore(TimeNow.now().toLocalDate())) {
             throw new InvalidTimeBookingException("Вы можете просматривать и бронировать слоты только на неделю вперед");
         }
@@ -90,6 +93,8 @@ public class TimeSlotBookingWay {
             }
         }
 
-        return availableSlots;
+        UUID responsibleId = responsibleRepository.findUserByTypeAndDate(bookingType, date).orElse(null);
+
+        return new AvailableTimeSlotsWithResponsible(responsibleId, availableSlots);
     }
 }

@@ -1,13 +1,18 @@
 package ru.tpu.hostel.booking.service.impl;
 
+import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import ru.tpu.hostel.booking.entity.Responsible;
 import ru.tpu.hostel.booking.entity.TimeSlot;
 import ru.tpu.hostel.booking.enums.BookingType;
+import ru.tpu.hostel.booking.repository.ResponsibleRepository;
 import ru.tpu.hostel.booking.repository.TimeSlotRepository;
 import ru.tpu.hostel.booking.service.schedules.SchedulesConfig;
 import ru.tpu.hostel.booking.utils.TimeNow;
@@ -22,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @EnableScheduling
@@ -30,6 +36,7 @@ public class TimeSlotGenerator {
     private static final String FILE_PATH = System.getenv("SCHEDULES_FILE_PATH");
 
     private final TimeSlotRepository timeSlotRepository;
+    private final ResponsibleRepository responsibleRepository;
 
     @Bean
     public ApplicationRunner initializeGymTimeSlots() {
@@ -118,13 +125,24 @@ public class TimeSlotGenerator {
             List<SchedulesConfig.TimeRange> reservedHours,
             SchedulesConfig.Schedule schedule
     ) {
-        String type = schedule.getType();
+        BookingType type = BookingType.valueOf(schedule.getType());
         int limit = schedule.getLimit();
         LocalTime startTime = schedule.getWorkingHours().getStart();
         LocalTime endTime = schedule.getWorkingHours().getEnd();
         boolean endNextDay = schedule.getWorkingHours().isEndNextDay();
         int slotDuration = schedule.getSlotDurationMinutes();
         SchedulesConfig.BreakConfig breaks = schedule.getBreaks();
+
+        Responsible responsible = new Responsible();
+        responsible.setDate(date);
+        responsible.setType(type);
+        responsible.setUser(schedule.getResponsible());
+
+        try {
+            responsibleRepository.save(responsible);
+        } catch (DataIntegrityViolationException | ConstraintViolationException e) {
+            log.error("Не удалось сохранить ответственного: {}", responsible);
+        }
 
         List<TimeSlot> dailySlots = new ArrayList<>();
         LocalDateTime slotStart = LocalDateTime.of(date, startTime);
@@ -144,7 +162,7 @@ public class TimeSlotGenerator {
                 TimeSlot timeSlot = new TimeSlot();
                 timeSlot.setStartTime(slotStart);
                 timeSlot.setEndTime(slotEnd);
-                timeSlot.setType(BookingType.valueOf(type));
+                timeSlot.setType(type);
                 timeSlot.setLimit(limit);
 
                 dailySlots.add(timeSlot);
