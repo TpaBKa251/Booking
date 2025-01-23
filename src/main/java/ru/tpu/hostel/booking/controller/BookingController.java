@@ -60,7 +60,7 @@ public class BookingController {
     }
 
     @GetMapping("/available/timeslot/{date}/{bookingType}/{userId}")
-    public AvailableTimeSlotsWithResponsible getAvailableTimeBooking(@PathVariable LocalDate date, @PathVariable BookingType bookingType, @PathVariable UUID userId) {
+    public List<TimeSlotResponseDto> getAvailableTimeBooking(@PathVariable LocalDate date, @PathVariable BookingType bookingType, @PathVariable UUID userId) {
         return bookingService.getAvailableTimeBooking(date, bookingType, userId);
     }
 

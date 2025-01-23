@@ -8,7 +8,9 @@ import lombok.RequiredArgsConstructor;
 public enum BookingType {
     HALL("Зал"),
     INTERNET("Интернет"),
-    GYM("Тренажерный зал");
+    GYM("Тренажерный зал"),
+    KITCHEN("Кухня")
+    ;
 
     private final String bookingTypeName;
 }

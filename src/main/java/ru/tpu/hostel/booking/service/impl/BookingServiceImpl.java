@@ -7,10 +7,10 @@ import org.springframework.stereotype.Service;
 import ru.tpu.hostel.booking.client.UserServiceClient;
 import ru.tpu.hostel.booking.dto.request.BookingTimeLineRequestDto;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequestDto;
-import ru.tpu.hostel.booking.dto.response.AvailableTimeSlotsWithResponsible;
 import ru.tpu.hostel.booking.dto.response.BookingResponseDto;
 import ru.tpu.hostel.booking.dto.response.BookingResponseWithUserDto;
 import ru.tpu.hostel.booking.dto.response.BookingShortResponseDto;
+import ru.tpu.hostel.booking.dto.response.TimeSlotResponseDto;
 import ru.tpu.hostel.booking.entity.Booking;
 import ru.tpu.hostel.booking.enums.BookingStatus;
 import ru.tpu.hostel.booking.enums.BookingType;
@@ -68,7 +68,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public AvailableTimeSlotsWithResponsible getAvailableTimeBooking(LocalDate date, BookingType bookingType, UUID userId) {
+    public List<TimeSlotResponseDto> getAvailableTimeBooking(LocalDate date, BookingType bookingType, UUID userId) {
         return timeSlotBookingWay.getAvailableTimeSlots(date, bookingType, userId);
     }
 

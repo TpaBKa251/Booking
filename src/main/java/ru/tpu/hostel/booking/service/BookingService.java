@@ -2,7 +2,6 @@ package ru.tpu.hostel.booking.service;
 
 import ru.tpu.hostel.booking.dto.request.BookingTimeLineRequestDto;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequestDto;
-import ru.tpu.hostel.booking.dto.response.AvailableTimeSlotsWithResponsible;
 import ru.tpu.hostel.booking.dto.response.BookingResponseDto;
 import ru.tpu.hostel.booking.dto.response.BookingResponseWithUserDto;
 import ru.tpu.hostel.booking.dto.response.BookingShortResponseDto;
@@ -22,7 +21,7 @@ public interface BookingService {
 
     List<BookingShortResponseDto> getAvailableTimeBookings(LocalDate date, BookingType bookingType);
 
-    AvailableTimeSlotsWithResponsible getAvailableTimeBooking(LocalDate date, BookingType bookingType, UUID userId);
+    List<TimeSlotResponseDto> getAvailableTimeBooking(LocalDate date, BookingType bookingType, UUID userId);
 
     BookingResponseDto cancelBooking(UUID bookingId, UUID userId);
 

@@ -49,7 +49,7 @@ public class TimeSlotBookingWay {
         }
 
         // Возможно это не надо
-        if (bookingRepository.findByTimeSlotAndUser(timeSlot, userId).isPresent()) {
+        if (bookingRepository.findByTimeSlotAndUserAndStatus(timeSlot, userId, BookingStatus.BOOKED).isPresent()) {
             throw new InvalidTimeBookingException("Вы не можете забронировать слот повторно");
         }
 
@@ -65,7 +65,7 @@ public class TimeSlotBookingWay {
         return BookingMapper.mapBookingToBookingResponseDto(booking);
     }
 
-    public AvailableTimeSlotsWithResponsible getAvailableTimeSlots(LocalDate date, BookingType bookingType, UUID userId) {
+    public List<TimeSlotResponseDto> getAvailableTimeSlots(LocalDate date, BookingType bookingType, UUID userId) {
         if (LocalDate.now().plusDays(7).isBefore(date) || date.isBefore(TimeNow.now().toLocalDate())) {
             throw new InvalidTimeBookingException("Вы можете просматривать и бронировать слоты только на неделю вперед");
         }
@@ -93,8 +93,6 @@ public class TimeSlotBookingWay {
             }
         }
 
-        UUID responsibleId = responsibleRepository.findUserByTypeAndDate(bookingType, date).orElse(null);
-
-        return new AvailableTimeSlotsWithResponsible(responsibleId, availableSlots);
+        return availableSlots;
     }
 }

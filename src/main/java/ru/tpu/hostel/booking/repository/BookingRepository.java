@@ -32,7 +32,7 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
 
     List<Booking> findAllByStatusAndUser(BookingStatus status, UUID user);
 
-    Optional<Booking> findByTimeSlotAndUser(TimeSlot timeSlot, UUID user);
+    Optional<Booking> findByTimeSlotAndUserAndStatus(TimeSlot timeSlot, UUID user, BookingStatus status);
 
     @Query("SELECT b FROM Booking b WHERE b.type = :type AND b.startTime >= :startDate AND b.startTime < :endDate AND b.status = 'BOOKED'")
     List<Booking> findAllByTypeAndStartTimeOnSpecificDay(

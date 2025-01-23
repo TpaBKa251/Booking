@@ -5,13 +5,17 @@ import org.springframework.stereotype.Service;
 import ru.tpu.hostel.booking.client.UserServiceClient;
 import ru.tpu.hostel.booking.dto.request.ResponsibleSetDto;
 import ru.tpu.hostel.booking.dto.response.ResponsibleResponseDto;
+import ru.tpu.hostel.booking.dto.response.ResponsibleResponseWithNameDto;
+import ru.tpu.hostel.booking.dto.response.UserShortResponseDto2;
 import ru.tpu.hostel.booking.entity.Responsible;
+import ru.tpu.hostel.booking.enums.BookingType;
 import ru.tpu.hostel.booking.exception.ResponsibleNotFoundException;
 import ru.tpu.hostel.booking.mapper.ResponsibleMapper;
 import ru.tpu.hostel.booking.repository.ResponsibleRepository;
 import ru.tpu.hostel.booking.repository.TimeSlotRepository;
 import ru.tpu.hostel.booking.service.ResponsibleService;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -55,5 +59,27 @@ public class ResponsibleServiceImpl implements ResponsibleService {
         }
 
         throw new ResponsibleNotFoundException();
+    }
+
+    @Override
+    public ResponsibleResponseWithNameDto getResponsible(LocalDate date, BookingType type) {
+        if (type == BookingType.KITCHEN) {
+            return new ResponsibleResponseWithNameDto(
+                    "Валерий",
+                    "Жмышенко",
+                    "Альбертович"
+            );
+        }
+        Responsible responsible = responsibleRepository.findByTypeAndDate(type, date).orElseThrow(
+                ResponsibleNotFoundException::new
+        );
+
+        if (responsible.getUser() == null) {
+            return new ResponsibleResponseWithNameDto("", "", "");
+        }
+
+        UserShortResponseDto2 user = userServiceClient.getUserByIdShort(responsible.getUser());
+
+        return new ResponsibleResponseWithNameDto(user.firstName(), user.lastName(), user.middleName());
     }
 }
