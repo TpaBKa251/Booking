@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @EnableScheduling
+//TODO ТОЖЕ ПЕРЕНОСИМ В ШЕДУЛЕР
 public class TimeSlotGenerator {
 
     private static final String SCHEDULE_MAPPING_ERROR_LOG_MESSAGE

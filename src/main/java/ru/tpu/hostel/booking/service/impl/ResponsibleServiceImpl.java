@@ -28,17 +28,20 @@ public class ResponsibleServiceImpl implements ResponsibleService {
 
     @Override
     public ResponsibleResponseDto setResponsible(ResponsibleSetDto responsibleSetDto) {
+        //Ищется чувак по типу и дате (он на какую-то дату назначен)
         Responsible responsible = responsibleRepository
                 .findByTypeAndDate(responsibleSetDto.type(), responsibleSetDto.date())
                 .orElse(null);
 
         if (responsible == null) {
 
+            //Ищем любой слот в этом дне
             if (timeSlotRepository.findOneByTypeAndStartTimeOnSpecificDay(
                     responsibleSetDto.type(),
                     responsibleSetDto.date().atTime(0, 0),
                     responsibleSetDto.date().atTime(23, 59)
             ).isPresent()) {
+                //Назначаем ответственного, если нет ответственного и если вообще есть расписание (слоты) на день
                 responsible = new Responsible();
                 responsible.setType(responsibleSetDto.type());
                 responsible.setDate(responsibleSetDto.date());
@@ -47,9 +50,13 @@ public class ResponsibleServiceImpl implements ResponsibleService {
             }
         }
 
+        //Собирается все роли человека, которого ставим
         List<String> roles = userServiceClient.getAllRolesByUserId(responsibleSetDto.user());
 
         for (String role : roles) {
+            //Если есть у человека роль ответственного за что-то, то ответственному ставим человека,
+            // которому хотим записать(Если у человека есть роль на что-то, то его только на это и можно поставаить
+            // (Если поставить человека не ответственного за зал в ответственного, то нельзя так))
             if (role.contains(responsibleSetDto.type().toString())) {
                 responsible.setUser(responsibleSetDto.user());
                 responsibleRepository.save(responsible);
@@ -61,8 +68,10 @@ public class ResponsibleServiceImpl implements ResponsibleService {
         throw new ResponsibleNotFoundException();
     }
 
+    //Для отображения человека с именем и ролью (Показывает, кто ответственный на день)
     @Override
     public ResponsibleResponseWithNameDto getResponsible(LocalDate date, BookingType type) {
+        //Здесь заглушка для кухни
         if (type == BookingType.KITCHEN) {
             return new ResponsibleResponseWithNameDto(
                     "Валерий",
@@ -70,10 +79,13 @@ public class ResponsibleServiceImpl implements ResponsibleService {
                     "Альбертович"
             );
         }
+
+        //Ищется ответственный по типу и дате
         Responsible responsible = responsibleRepository.findByTypeAndDate(type, date).orElseThrow(
                 ResponsibleNotFoundException::new
         );
 
+        //Если пользователь не найден (Не назначен), то на мобилку идет пустота
         if (responsible.getUser() == null) {
             return new ResponsibleResponseWithNameDto("", "", "");
         }

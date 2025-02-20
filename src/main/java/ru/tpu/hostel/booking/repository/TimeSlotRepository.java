@@ -23,6 +23,7 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, UUID> {
 
     List<TimeSlot> findAllByTypeAndStartTimeAfter(BookingType bookingType, LocalDateTime startTime);
 
+    //Здесь ищется конкретный слот на какое-то время (или в промежутке?)
     @Query("SELECT t.startTime FROM TimeSlot t WHERE t.type = :type AND t.startTime >= :startDate AND t.startTime < :endDate order by t.startTime limit 1")
     Optional<LocalDateTime> findOneByTypeAndStartTimeOnSpecificDay(
             @Param("type") BookingType type,
