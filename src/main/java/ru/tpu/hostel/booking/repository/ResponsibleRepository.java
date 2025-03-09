@@ -16,6 +16,7 @@ public interface ResponsibleRepository extends JpaRepository<Responsible, UUID> 
 
     Optional<Responsible> findByTypeAndDate(BookingType type, LocalDate date);
 
+    //я карта я карта я карта я карта я карта я карта я карта я карта я карта я карта я карта
     @Query("select r.user from Responsible r where r.type = :type and r.date = :date")
     Optional<UUID> findUserByTypeAndDate(@Param("type") BookingType type, @Param("date") LocalDate date);
 }
