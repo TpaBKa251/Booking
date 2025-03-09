@@ -138,6 +138,7 @@ public class TimeSlotGenerator {
         timeSlotRepository.saveAll(slots);
     }
 
+    //мини изменение
     private List<TimeSlot> generateDailySlots(
             LocalDate date,
             List<SchedulesConfig.TimeRange> reservedHours,
