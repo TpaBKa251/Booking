@@ -1,0 +1,3 @@
+schedules:
+  timeslots:
+    path: /app/src/main/java/ru/tpu/hostel/booking/service/schedules/schedules.json

@@ -3,6 +3,7 @@ package ru.tpu.hostel.booking.service.impl;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -33,9 +34,17 @@ import java.util.stream.Collectors;
 @EnableScheduling
 public class TimeSlotGenerator {
 
-    private static final String FILE_PATH = System.getenv("SCHEDULES_FILE_PATH");
+    private static final String SCHEDULE_MAPPING_ERROR_LOG_MESSAGE
+            = "Ошибка загрузки шаблона расписаний. Генерация слотов для брони невозможна";
+
+    /**
+     * Файл-конфиг расписания для слотов
+     */
+    @Value("${schedules.timeslots.path}")
+    private String schedulesFilePath;
 
     private final TimeSlotRepository timeSlotRepository;
+
     private final ResponsibleRepository responsibleRepository;
 
     @Bean
@@ -48,9 +57,13 @@ public class TimeSlotGenerator {
         SchedulesConfig config;
 
         try {
-            config = SchedulesConfig.loadFromFile(FILE_PATH);
+            config = SchedulesConfig.loadFromFile(schedulesFilePath);
+            if (config == null) {
+                throw new IOException();
+            }
         } catch (IOException e) {
-            throw new RuntimeException("Ошибка загрузки шаблона расписаний", e);
+            log.error(SCHEDULE_MAPPING_ERROR_LOG_MESSAGE + " (на последний день).", e);
+            return;
         }
 
         List<TimeSlot> slots = new ArrayList<>();
@@ -82,9 +95,13 @@ public class TimeSlotGenerator {
         SchedulesConfig config;
 
         try {
-            config = SchedulesConfig.loadFromFile(FILE_PATH);
+            config = SchedulesConfig.loadFromFile(schedulesFilePath);
+            if (config == null) {
+                throw new IOException();
+            }
         } catch (IOException e) {
-            throw new RuntimeException("Ошибка загрузки шаблона расписаний", e);
+            log.error(SCHEDULE_MAPPING_ERROR_LOG_MESSAGE + " (на неделю/недостающие).", e);
+            return;
         }
 
         List<TimeSlot> slots = new ArrayList<>();

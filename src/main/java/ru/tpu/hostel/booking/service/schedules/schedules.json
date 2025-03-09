@@ -4,7 +4,15 @@
       "type": "GYM",
       "limit": 11,
       "responsible": null,
-      "workingDays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+      "workingDays": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ],
       "workingHours": {
         "start": "10:00",
         "end": "21:30",
@@ -16,16 +24,42 @@
         "breakDurationMinutes": 30
       },
       "reservedHours": {
-        "MONDAY": [{"start": "20:00", "end": "21:30", "endNextDay": false}],
-        "WEDNESDAY": [{"start": "20:00", "end": "21:30", "endNextDay": false}],
-        "SATURDAY": [{"start": "20:00", "end": "21:30", "endNextDay": false}]
+        "MONDAY": [
+          {
+            "start": "20:00",
+            "end": "21:30",
+            "endNextDay": false
+          }
+        ],
+        "WEDNESDAY": [
+          {
+            "start": "20:00",
+            "end": "21:30",
+            "endNextDay": false
+          }
+        ],
+        "SATURDAY": [
+          {
+            "start": "20:00",
+            "end": "21:30",
+            "endNextDay": false
+          }
+        ]
       }
     },
     "hall": {
       "type": "HALL",
       "limit": 1,
       "responsible": null,
-      "workingDays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+      "workingDays": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ],
       "workingHours": {
         "start": "10:00",
         "end": "20:00",
@@ -42,7 +76,15 @@
       "type": "INTERNET",
       "limit": 1,
       "responsible": "83f9c38a-d04c-407d-a85a-3514b4824588",
-      "workingDays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+      "workingDays": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ],
       "workingHours": {
         "start": "20:00",
         "end": "00:00",
