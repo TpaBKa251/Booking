@@ -28,7 +28,7 @@ repositories {
 
 sonarqube {
     properties {
-        property "sonar.projectKey", "TpaBKa251_Booking" // Замените на ключ вашего проекта в SonarCloud
+        property "sonar.projectKey", "TpaBKa251_Booking"
         property "sonar.organization", "hostel-service" // Замените на имя вашей организации
         property "sonar.host.url", "https://sonarcloud.io"
         property "sonar.login", System.getenv("SONAR_TOKEN") // Используется токен из секретов GitHub
