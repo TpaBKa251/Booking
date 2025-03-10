@@ -2,7 +2,7 @@ package ru.tpu.hostel.booking.dto.response;
 
 import java.util.UUID;
 
-public record UserShortResponseDto2(
+public record UserShortResponse(
         UUID id,
         String firstName,
         String lastName,

@@ -2,15 +2,15 @@ package ru.tpu.hostel.booking.service.impl.way;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.tpu.hostel.booking.dto.request.BookingTimeLineRequestDto;
-import ru.tpu.hostel.booking.dto.response.BookingResponseDto;
-import ru.tpu.hostel.booking.dto.response.BookingShortResponseDto;
-import ru.tpu.hostel.booking.entity.Booking;
+import ru.tpu.hostel.booking.dto.request.BookingTimeLineRequest;
+import ru.tpu.hostel.booking.dto.response.BookingResponse;
+import ru.tpu.hostel.booking.dto.response.BookingShortResponse;
+import ru.tpu.hostel.booking.entity.BookingOld;
 import ru.tpu.hostel.booking.enums.BookingStatus;
 import ru.tpu.hostel.booking.enums.BookingType;
 import ru.tpu.hostel.booking.exception.InvalidTimeBookingException;
-import ru.tpu.hostel.booking.mapper.BookingMapper;
-import ru.tpu.hostel.booking.repository.BookingRepository;
+import ru.tpu.hostel.booking.mapper.BookingMapperOld;
+import ru.tpu.hostel.booking.repository.BookingRepositoryOld;
 import ru.tpu.hostel.booking.utils.TimeNow;
 
 import java.time.LocalDate;
@@ -28,12 +28,12 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TimeLineBookingWay {
 
-    private final BookingRepository bookingRepository;
+    private final BookingRepositoryOld bookingRepository;
 
     private LocalTime startBookingTime = LocalTime.of(6, 0);
     private LocalTime endBookingTime = LocalTime.of(0, 0);
 
-    public BookingResponseDto createBooking(BookingTimeLineRequestDto bookingTimeLineRequestDto, UUID userId) {
+    public BookingResponse createBooking(BookingTimeLineRequest bookingTimeLineRequestDto, UUID userId) {
         if (
                 bookingTimeLineRequestDto.startTime().isBefore(TimeNow.now())
                         || bookingTimeLineRequestDto.endTime().isBefore(TimeNow.now())
@@ -66,20 +66,20 @@ public class TimeLineBookingWay {
             throw new InvalidTimeBookingException("Стартовое время должно быть раньше конечного");
         }
 
-        List<Booking> bookedBookings = bookingRepository
+        List<BookingOld> bookedBookings = bookingRepository
                 .findAllByStatusAndType(BookingStatus.BOOKED, bookingTimeLineRequestDto.bookingType());
 
-        for (Booking booking : bookedBookings) {
+        for (BookingOld booking : bookedBookings) {
             if (bookingTimeLineRequestDto.startTime().isBefore(booking.getEndTime())
                     && bookingTimeLineRequestDto.endTime().isAfter(booking.getStartTime())) {
                 throw new InvalidTimeBookingException(
                         "Ваша бронь пересекается с другой: "
-                                + BookingMapper.mapBookingToBookingShortResponseDto(booking)
+                                + BookingMapperOld.mapBookingToBookingShortResponseDto(booking)
                 );
             }
         }
 
-        Booking booking = new Booking();
+        BookingOld booking = new BookingOld();
         booking.setStartTime(bookingTimeLineRequestDto.startTime().withMinute(0).withSecond(0).minusNanos(0));
         booking.setEndTime(bookingTimeLineRequestDto.endTime().withMinute(0).withSecond(0).minusNanos(0));
         booking.setStatus(BookingStatus.BOOKED);
@@ -88,26 +88,26 @@ public class TimeLineBookingWay {
 
         bookingRepository.save(booking);
 
-        return BookingMapper.mapBookingToBookingResponseDto(booking);
+        return BookingMapperOld.mapBookingToBookingResponseDto(booking);
     }
 
-    public List<BookingShortResponseDto> getAvailableTimeBookings(LocalDate date, BookingType bookingType) {
+    public List<BookingShortResponse> getAvailableTimeBookings(LocalDate date, BookingType bookingType) {
         if (LocalDate.now().plusDays(7).isBefore(date) || date.isBefore(TimeNow.now().toLocalDate())) {
             throw new InvalidTimeBookingException("Вы можете просматривать и бронировать только на неделю вперед");
         }
 
-        List<Booking> bookedBookings = bookingRepository.findAllByStatusAndType(BookingStatus.BOOKED, bookingType);
+        List<BookingOld> bookedBookings = bookingRepository.findAllByStatusAndType(BookingStatus.BOOKED, bookingType);
 
         if (bookedBookings.isEmpty()) {
             return List.of(
-                    new BookingShortResponseDto(
+                    new BookingShortResponse(
                             startBookingTime.atDate(date),
                             endBookingTime.atDate(date.plusDays(1))
                     )
             );
         }
 
-        List<BookingShortResponseDto> availableBookingTime = new ArrayList<>();
+        List<BookingShortResponse> availableBookingTime = new ArrayList<>();
 
         LocalTime currentStartTime;
 
@@ -121,12 +121,12 @@ public class TimeLineBookingWay {
                     .minusNanos(0);
         }
 
-        for (Booking booking : bookedBookings) {
+        for (BookingOld booking : bookedBookings) {
             if (booking.getStartTime().toLocalTime().isAfter(currentStartTime)
                     && booking.getStartTime().toLocalDate().equals(date)
             ) {
                 availableBookingTime.add(
-                        new BookingShortResponseDto(
+                        new BookingShortResponse(
                                 LocalDateTime.of(booking.getStartTime().toLocalDate(), currentStartTime),
                                 booking.getStartTime()
                         )
@@ -139,7 +139,7 @@ public class TimeLineBookingWay {
         }
 
         if (currentStartTime.isAfter(endBookingTime) || currentStartTime.equals(startBookingTime)) {
-            availableBookingTime.add(new BookingShortResponseDto(
+            availableBookingTime.add(new BookingShortResponse(
                     LocalDateTime.of(date, currentStartTime),
                     LocalDateTime.of(date.plusDays(1), endBookingTime)
             ));

@@ -7,7 +7,7 @@ import ru.tpu.hostel.booking.enums.BookingType;
 
 import java.time.LocalDateTime;
 
-public record BookingTimeLineRequestDto(
+public record BookingTimeLineRequest(
 
         @NotNull(message = "Тип ресурса для брони не может быть пустым")
         BookingType bookingType,

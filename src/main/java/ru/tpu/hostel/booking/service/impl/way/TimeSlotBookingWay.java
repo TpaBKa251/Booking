@@ -2,22 +2,22 @@ package ru.tpu.hostel.booking.service.impl.way;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequestDto;
-import ru.tpu.hostel.booking.dto.response.AvailableTimeSlotsWithResponsible;
-import ru.tpu.hostel.booking.dto.response.BookingResponseDto;
-import ru.tpu.hostel.booking.dto.response.TimeSlotResponseDto;
-import ru.tpu.hostel.booking.entity.Booking;
+import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequest;
+import ru.tpu.hostel.booking.dto.response.BookingResponse;
+import ru.tpu.hostel.booking.dto.response.TimeSlotResponse;
+import ru.tpu.hostel.booking.entity.BookingOld;
 import ru.tpu.hostel.booking.entity.TimeSlot;
 import ru.tpu.hostel.booking.enums.BookingStatus;
 import ru.tpu.hostel.booking.enums.BookingType;
 import ru.tpu.hostel.booking.exception.InvalidTimeBookingException;
 import ru.tpu.hostel.booking.exception.SlotAlreadyBookedException;
 import ru.tpu.hostel.booking.exception.SlotNotFoundException;
-import ru.tpu.hostel.booking.mapper.BookingMapper;
+import ru.tpu.hostel.booking.mapper.BookingMapperOld;
 import ru.tpu.hostel.booking.mapper.SlotMapper;
-import ru.tpu.hostel.booking.repository.BookingRepository;
+import ru.tpu.hostel.booking.repository.BookingRepositoryOld;
 import ru.tpu.hostel.booking.repository.ResponsibleRepository;
 import ru.tpu.hostel.booking.repository.TimeSlotRepository;
+import ru.tpu.hostel.booking.service.impl.BookingServiceImplOld;
 import ru.tpu.hostel.booking.utils.TimeNow;
 
 import java.time.LocalDate;
@@ -25,19 +25,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Этот класс устарел и будет удалён в будущем.
+ * Вся логика этого класса будет перенесена в класс {@link BookingServiceImplOld}.
+ * @deprecated Класс заменён на {@link BookingServiceImplOld}.
+ *
+ * @see BookingServiceImplOld
+ */
+@SuppressWarnings("removal")
+@Deprecated(forRemoval = true)
 @Service
 @RequiredArgsConstructor
 public class TimeSlotBookingWay {
 
     private final TimeSlotRepository timeSlotRepository;
-    private final BookingRepository bookingRepository;
+    private final BookingRepositoryOld bookingRepository;
     private final ResponsibleRepository responsibleRepository;
 
-    public BookingResponseDto createBooking(BookingTimeSlotRequestDto bookingTimeSlotRequestDto, UUID userId) {
+    public BookingResponse createBooking(BookingTimeSlotRequest bookingTimeSlotRequestDto, UUID userId) {
         TimeSlot timeSlot = timeSlotRepository.findById(bookingTimeSlotRequestDto.slotId())
                 .orElseThrow(() -> new SlotNotFoundException("Слот не найден"));
 
-        List<Booking> bookings = bookingRepository.findAllByStatusNotAndTimeSlot(BookingStatus.CANCELLED, timeSlot);
+        List<BookingOld> bookings = bookingRepository.findAllByStatusNotAndTimeSlot(BookingStatus.CANCELLED, timeSlot);
 
         if (bookings.size() == timeSlot.getLimit()) {
             throw new SlotAlreadyBookedException("Слот уже забронирован");
@@ -53,7 +62,7 @@ public class TimeSlotBookingWay {
             throw new InvalidTimeBookingException("Вы не можете забронировать слот повторно");
         }
 
-        Booking booking = new Booking();
+        BookingOld booking = new BookingOld();
         booking.setUser(userId);
         booking.setTimeSlot(timeSlot);
         booking.setStartTime(timeSlot.getStartTime());
@@ -62,23 +71,23 @@ public class TimeSlotBookingWay {
         booking.setType(timeSlot.getType());
         bookingRepository.save(booking);
 
-        return BookingMapper.mapBookingToBookingResponseDto(booking);
+        return BookingMapperOld.mapBookingToBookingResponseDto(booking);
     }
 
-    public List<TimeSlotResponseDto> getAvailableTimeSlots(LocalDate date, BookingType bookingType, UUID userId) {
+    public List<TimeSlotResponse> getAvailableTimeSlots(LocalDate date, BookingType bookingType, UUID userId) {
         if (LocalDate.now().plusDays(7).isBefore(date) || date.isBefore(TimeNow.now().toLocalDate())) {
             throw new InvalidTimeBookingException("Вы можете просматривать и бронировать слоты только на неделю вперед");
         }
 
         List<TimeSlot> timeSlots = timeSlotRepository.findByType(bookingType);
 
-        List<TimeSlotResponseDto> availableSlots = new ArrayList<>();
+        List<TimeSlotResponse> availableSlots = new ArrayList<>();
 
         for (TimeSlot timeSlot : timeSlots) {
             if (timeSlot.getStartTime().toLocalDate().equals(date)
                     && timeSlot.getStartTime().isAfter(TimeNow.now())
             ) {
-                List<Booking> bookings = bookingRepository.findAllByTimeSlot(timeSlot)
+                List<BookingOld> bookings = bookingRepository.findAllByTimeSlot(timeSlot)
                         .stream()
                         .filter(booking -> booking.getStatus() != BookingStatus.CANCELLED)
                         .toList();

@@ -6,7 +6,7 @@ import ru.tpu.hostel.booking.enums.BookingType;
 import java.time.LocalDate;
 import java.util.UUID;
 
-public record ResponsibleSetDto(
+public record ResponsibleSetRequest(
         @NotNull(message = "Дата назначения ответственного не может быть пустой")
         LocalDate date,
 

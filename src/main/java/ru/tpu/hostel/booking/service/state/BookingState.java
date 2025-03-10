@@ -1,11 +1,11 @@
 package ru.tpu.hostel.booking.service.state;
 
-import ru.tpu.hostel.booking.entity.Booking;
-import ru.tpu.hostel.booking.repository.BookingRepository;
+import ru.tpu.hostel.booking.entity.BookingOld;
+import ru.tpu.hostel.booking.repository.BookingRepositoryOld;
 
 public interface BookingState {
 
-    void updateStatus(Booking booking, BookingRepository bookingRepository);
+    void updateStatus(BookingOld booking, BookingRepositoryOld bookingRepository);
 
-    void cancelBooking(Booking booking, BookingRepository bookingRepository);
+    void cancelBooking(BookingOld booking, BookingRepositoryOld bookingRepository);
 }

@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import ru.tpu.hostel.booking.dto.response.UserShortResponseDto2;
+import ru.tpu.hostel.booking.dto.response.UserShortResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,5 +21,5 @@ public interface UserServiceClient {
     List<String> getAllRolesByUserId(@PathVariable UUID userId);
 
     @GetMapping("/users/get/by/id/short/{id}")
-    UserShortResponseDto2 getUserByIdShort(@PathVariable UUID id);
+    UserShortResponse getUserByIdShort(@PathVariable UUID id);
 }
