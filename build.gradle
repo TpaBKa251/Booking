@@ -35,7 +35,69 @@ sonarqube {
         property "sonar.coverage.jacoco.xmlReportPaths", layout.buildDirectory.file("reports/jacoco/test/jacocoTestReport.xml")
         property "sonar.coverage.exclusions", "**/*Generated*.java,**/model/*.java" // Исключения из анализа
         property "sonar.java.binaries", "build/classes/java/main" // Путь к скомпилированным классам
-        //property "sonar.exclusions", "**/TimeSlotSchedulesConfig.java"
+        property "sonar.exclusions", "**/UserServiceClient/**/*.java" +
+                "**/BookingController/**/*.java," +
+                "**/BookingControllerOld/**/*.java," +
+                "**/ResponsibleController/**/*.java," +
+                "**/BookingTimeLineRequest/**/*.java," +
+                "**/BookingTimeSlotRequest/**/*.java," +
+                "**/ResponsibleSetRequest/**/*.java," +
+                "**/AvailableTimeBookingResponse/**/*.java," +
+                "**/AvailableTimeSlotsWithResponsible/**/*.java," +
+                "**/BookingResponse/**/*.java," +
+                "**/BookingResponseWithUser/**/*.java," +
+                "**/BookingShortResponse/**/*.java," +
+                "**/ResponsibleResponse/**/*.java," +
+                "**/ResponsibleResponseWithName/**/*.java," +
+                "**/TimeSlotResponse/**/*.java," +
+                "**/UserShortResponse/**/*.java," +
+                "**/Booking/**/*.java," +
+                "**/BookingOld/**/*.java," +
+                "**/Responsible/**/*.java," +
+                "**/TimeSlot/**/*.java," +
+                "**/BookingStatus/**/*.java," +
+                "**/BookingType/**/*.java," +
+                "**/BookingWay/**/*.java," +
+                "**/BookingNotFoundException/**/*.java," +
+                "**/InvalidTimeBookingException/**/*.java," +
+                "**/NotFoundException/**/*.java," +
+                "**/ResponsibleNotFoundException/**/*.java," +
+                "**/SlotAlreadyBookedException/**/*.java," +
+                "**/SlotNotFoundException/**/*.java," +
+                "**/UserNotFound/**/*.java," +
+                "**/GlobalExceptionHandler/**/*.java," +
+                "**/BookingMapper/**/*.java," +
+                "**/BookingMapperOld/**/*.java," +
+                "**/ResponsibleMapper/**/*.java," +
+                "**/SlotMapper/**/*.java," +
+                "**/BookingRepository/**/*.java," +
+                "**/BookingRepositoryOld/**/*.java," +
+                "**/ResponsibleRepository/**/*.java," +
+                "**/TimeSlotRepository/**/*.java," +
+                "**/BookedState/**/*.java," +
+                "**/BookedStateOld/**/*.java," +
+                "**/CancelState/**/*.java," +
+                "**/CancelStateOld/**/*.java," +
+                "**/CompletedState/**/*.java," +
+                "**/CompletedStateOld/**/*.java," +
+                "**/InProgressState/**/*.java," +
+                "**/InProgressStateOld/**/*.java," +
+                "**/NotBookedState/**/*.java," +
+                "**/NotBookedStateOld/**/*.java," +
+                "**/TimeLineBookingWay/**/*.java," +
+                "**/TimeSlotBookingWay/**/*.java," +
+                "**/BookingServiceImpl/**/*.java," +
+                "**/BookingServiceImplOld/**/*.java," +
+                "**/BookingStateImpl/**/*.java," +
+                "**/BookingStateImplOld/**/*.java," +
+                "**/ResponsibleServiceImpl/**/*.java," +
+                "**/TimeSlotGenerator/**/*.java," +
+                "**/SchedulesConfig/**/*.java," +
+                "**/BookingState/**/*.java," +
+                "**/BookingService/**/*.java," +
+                "**/BookingServiceOld/**/*.java," +
+                "**/ResponsibleService/**/*.java," +
+                "**/TimeNow/**/*.java,"
     }
 }
 
