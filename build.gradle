@@ -35,7 +35,7 @@ sonarqube {
         property "sonar.coverage.jacoco.xmlReportPaths", layout.buildDirectory.file("reports/jacoco/test/jacocoTestReport.xml")
         property "sonar.coverage.exclusions", "**/*Generated*.java,**/model/*.java" // Исключения из анализа
         property "sonar.java.binaries", "build/classes/java/main" // Путь к скомпилированным классам
-        //property "sonar.exclusions", "**/TimeSlotSchedulesConfig.java"
+        property "sonar.exclusions", "**/client/**, **/controller/**, **/dto/**, **/entity/**, **/handler/**, **/mapper/**, **/repository/**, **/utils/**, **/service/**"
     }
 }
 

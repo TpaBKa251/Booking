@@ -7,6 +7,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PostLoad;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
@@ -24,11 +26,19 @@ import ru.tpu.hostel.booking.service.state.BookingState;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Table(name = "booking", schema = "booking")
+/**
+ * Этот класс устарел и будет удалён в будущем.
+ * Вместо него используйте {@link Booking}.
+ * @deprecated Класс заменён на {@link Booking}.
+ *
+ * @see Booking
+ */
+@Deprecated(forRemoval = true)
+@Table(name = "booking", schema = "booking") // Указание схемы
 @Entity
 @Getter
 @Setter
-public class Booking {
+public class BookingOld {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -54,8 +64,9 @@ public class Booking {
     @Column(name = "\"user\"")
     private UUID user;
 
-    @Column(name = "time_slot_id")
-    private UUID timeSlot;
+    @ManyToOne
+    @JoinColumn(name = "time_slot_id", referencedColumnName = "id") // Ссылка на TimeSlot
+    private TimeSlot timeSlot;
 
     @PostLoad
     public void initializeBookingState() {
@@ -65,8 +76,7 @@ public class Booking {
             case BOOKED -> this.bookingState = new BookedStateOld();
             case IN_PROGRESS -> this.bookingState = new InProgressStateOld();
             case COMPLETED -> this.bookingState = new CompletedStateOld();
-            default -> throw new IllegalStateException("Unknown booking status: " + this.status);
+            default -> throw new IllegalStateException("Unknownn booking status: " + this.status);
         }
     }
-
 }

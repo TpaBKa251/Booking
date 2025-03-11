@@ -8,12 +8,23 @@ import ru.tpu.hostel.booking.dto.response.BookingShortResponse;
 import ru.tpu.hostel.booking.dto.response.TimeSlotResponse;
 import ru.tpu.hostel.booking.enums.BookingStatus;
 import ru.tpu.hostel.booking.enums.BookingType;
+import ru.tpu.hostel.booking.repository.BookingRepository;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-public interface BookingService {
+/**
+ * Этот класс устарел и будет удалён в будущем.
+ * Вместо него используйте {@link BookingService}.
+ * @deprecated Класс заменён на {@link BookingService}.
+ *
+ * @see BookingService
+ */
+@SuppressWarnings("removal")
+@Deprecated(forRemoval = true)
+public interface BookingServiceOld {
+
     BookingResponse createBooking(BookingTimeLineRequest bookingTimeLineRequestDto, UUID userId);
 
     BookingResponse createBooking(BookingTimeSlotRequest bookingTimeSlotRequestDto, UUID userId);

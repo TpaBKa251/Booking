@@ -5,6 +5,6 @@ import java.util.UUID;
 
 public record AvailableTimeSlotsWithResponsible(
         UUID responsibleId,
-        List<TimeSlotResponseDto> timeSlots
+        List<TimeSlotResponse> timeSlots
 ) {
 }

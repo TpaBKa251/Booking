@@ -1,6 +1,6 @@
 package ru.tpu.hostel.booking.dto.response;
 
-public record ResponsibleResponseWithNameDto(
+public record ResponsibleResponseWithName(
         String firstName,
         String lastName,
         String middleName

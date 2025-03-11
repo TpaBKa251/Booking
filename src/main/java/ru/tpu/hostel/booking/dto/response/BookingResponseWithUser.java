@@ -5,7 +5,7 @@ import ru.tpu.hostel.booking.enums.BookingStatus;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public record BookingResponseWithUserDto(
+public record BookingResponseWithUser(
         UUID id,
         UUID userId,
         LocalDateTime startTime,
