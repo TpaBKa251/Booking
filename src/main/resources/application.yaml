@@ -4,21 +4,39 @@ server:
 spring:
   profiles:
     active: "@activatedProperties@"
+
   jpa:
     show-sql: true
     properties:
       hibernate:
         format_sql: true
+
   datasource:
     url: jdbc:postgresql://hostelDB:5432/hostelService
     username: hostel
     password: ilia
+
   flyway:
     jdbc-properties:
       enabled: true
       locations:
         - db.migration
     schemas: booking
+
+rabbitmq:
+  schedules-service:
+    username: schedule
+    password: schedule
+    virtualHost: schedule-service
+    addresses: rabbitmq:5672
+    connectionTimeout: 6000
+
+queueing:
+  schedules-service:
+    exchangeName: schedule-timeslots-exchange
+    queueReplyName: schedule-reply-timeslots-queue
+    routingKey: schedule-timeslots
+    replyRoutingKey: schedule-reply-timeslots
 
 springdoc:
   swagger-ui:
