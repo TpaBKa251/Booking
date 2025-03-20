@@ -1,6 +1,9 @@
 package ru.tpu.hostel.booking.service.impl.way;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.Message;
 import org.springframework.stereotype.Service;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequest;
 import ru.tpu.hostel.booking.dto.response.BookingResponse;
@@ -14,17 +17,20 @@ import ru.tpu.hostel.booking.exception.SlotAlreadyBookedException;
 import ru.tpu.hostel.booking.exception.SlotNotFoundException;
 import ru.tpu.hostel.booking.mapper.BookingMapperOld;
 import ru.tpu.hostel.booking.mapper.SlotMapper;
+import ru.tpu.hostel.booking.rabbit.amqp.AmqpMessageSender;
 import ru.tpu.hostel.booking.repository.BookingRepositoryOld;
 import ru.tpu.hostel.booking.repository.ResponsibleRepository;
 import ru.tpu.hostel.booking.repository.TimeSlotRepository;
 import ru.tpu.hostel.booking.service.impl.BookingServiceImplOld;
 import ru.tpu.hostel.booking.utils.TimeNow;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 /**
  * Этот класс устарел и будет удалён в будущем.
  * Вся логика этого класса будет перенесена в класс {@link BookingServiceImplOld}.
@@ -39,10 +45,23 @@ import java.util.UUID;
 public class TimeSlotBookingWay {
 
     private final TimeSlotRepository timeSlotRepository;
+
     private final BookingRepositoryOld bookingRepository;
+
     private final ResponsibleRepository responsibleRepository;
 
+    private final AmqpMessageSender schedulesServiceAmqpMessageSender;
+
     public BookingResponse createBooking(BookingTimeSlotRequest bookingTimeSlotRequestDto, UUID userId) {
+        try {
+            schedulesServiceAmqpMessageSender.sendAndReceive(
+                    bookingTimeSlotRequestDto.slotId().toString(),
+                    bookingTimeSlotRequestDto.slotId()
+            );
+        } catch (Exception e) {
+            log.error("Что-то пошло не так", e);
+        }
+
         TimeSlot timeSlot = timeSlotRepository.findById(bookingTimeSlotRequestDto.slotId())
                 .orElseThrow(() -> new SlotNotFoundException("Слот не найден"));
 

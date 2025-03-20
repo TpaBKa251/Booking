@@ -1,6 +1,7 @@
 package ru.tpu.hostel.booking.handler;
 
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import ru.tpu.hostel.booking.exception.UserNotFound;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
@@ -115,6 +117,7 @@ public class GlobalExceptionHandler {
 
         map.put("code", "500");
         map.put("message", ex.getMessage());
+        log.error(ex.getMessage(), ex);
 
         return new ResponseEntity<>(map, HttpStatus.INTERNAL_SERVER_ERROR);
     }

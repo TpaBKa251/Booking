@@ -19,7 +19,6 @@ import ru.tpu.hostel.booking.dto.response.TimeSlotResponse;
 import ru.tpu.hostel.booking.enums.BookingStatus;
 import ru.tpu.hostel.booking.enums.BookingType;
 import ru.tpu.hostel.booking.service.BookingServiceOld;
-import ru.tpu.hostel.booking.service.impl.BookingStateImpl;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,12 +28,11 @@ import java.util.UUID;
 /**
  * Этот класс устарел и будет удалён в будущем.
  * Вместо него используйте {@link BookingController}.
- * @deprecated Класс заменён на {@link BookingController}.
  *
  * @see BookingController
  */
 @SuppressWarnings("removal")
-@Deprecated(forRemoval = true)
+//@Deprecated(forRemoval = true)
 @RestController
 @RequestMapping("bookings")
 @RequiredArgsConstructor

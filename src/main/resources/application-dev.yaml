@@ -4,3 +4,7 @@ server:
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5430/hostelService
+
+rabbitmq:
+  schedules-service:
+    addresses: localhost:5672
