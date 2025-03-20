@@ -22,7 +22,7 @@ services:
   bookingservice:
     container_name: bookingservice
     build:
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile-local
       context: .
     hostname: bookingservice
     ports:

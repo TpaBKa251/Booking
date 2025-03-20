@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://82.202.138.26:5430/hostelService
+
+schedules:
+  timeslots:
+    path: /app/src/main/java/ru/tpu/hostel/booking/service/schedules/schedules.json
+
+rabbitmq:
+  schedules-service:
+    addresses: 82.202.138.26:5672
