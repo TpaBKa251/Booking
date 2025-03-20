@@ -47,22 +47,23 @@ public class TimeSlotBookingWay {
     private final TimeSlotRepository timeSlotRepository;
 
     private final BookingRepositoryOld bookingRepository;
+
     private final ResponsibleRepository responsibleRepository;
 
     private final AmqpMessageSender schedulesServiceAmqpMessageSender;
 
     public BookingResponse createBooking(BookingTimeSlotRequest bookingTimeSlotRequestDto, UUID userId) {
-        TimeSlot timeSlot = timeSlotRepository.findById(bookingTimeSlotRequestDto.slotId())
-                .orElseThrow(() -> new SlotNotFoundException("Слот не найден"));
-
         try {
             schedulesServiceAmqpMessageSender.sendAndReceive(
                     bookingTimeSlotRequestDto.slotId().toString(),
                     bookingTimeSlotRequestDto.slotId()
             );
-        } catch (IOException e) {
-            log.error("Ответ так и не получили", e);
+        } catch (Exception e) {
+            log.error("Что-то пошло не так", e);
         }
+
+        TimeSlot timeSlot = timeSlotRepository.findById(bookingTimeSlotRequestDto.slotId())
+                .orElseThrow(() -> new SlotNotFoundException("Слот не найден"));
 
         List<BookingOld> bookings = bookingRepository.findAllByStatusNotAndTimeSlot(BookingStatus.CANCELLED, timeSlot);
 

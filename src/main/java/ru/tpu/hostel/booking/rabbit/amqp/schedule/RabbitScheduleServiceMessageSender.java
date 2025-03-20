@@ -81,7 +81,10 @@ public class RabbitScheduleServiceMessageSender implements AmqpMessageSender {
 
         Message replyMessage = rabbitTemplate.sendAndReceive(message);
 
-        if (replyMessage == null) {
+        if (replyMessage == null
+                || replyMessage.getBody() == null
+                || replyMessage.getBody().length == 0
+                || "null".equals(new String(replyMessage.getBody()))) {
             throw new SlotNotFoundException();
         }
 
