@@ -1,5 +1,6 @@
 version: '3.9'
 services:
+  # Может не стартануть, если уже запущен в сервисе расписаний (Вахта) - это нормально
   rabbitmq:
     image: rabbitmq:3.12-management
     container_name: rabbitmq
