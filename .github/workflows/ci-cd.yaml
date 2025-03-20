@@ -1,4 +1,4 @@
-name: CI/CD for Papich
+name: CI/CD for Jabroni
 
 on:
   push:
