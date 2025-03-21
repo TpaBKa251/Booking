@@ -1,0 +1,266 @@
+openapi: 3.0.1
+info:
+  title: API сервиса для бронирвоания Джаборни
+  version: v0.1
+paths:
+  /bookings/timeslot/{userId}:
+    post:
+      tags:
+        - booking-controller
+      operationId: book
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingTimeSlotRequest"
+        required: true
+      responses:
+        "400":
+          description: Bad Request
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+  /bookings/cancel/{bookingId}/{userId}:
+    patch:
+      tags:
+        - booking-controller
+      operationId: cancel
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "400":
+          description: Bad Request
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+  /bookings/get/all/by/user/{userId}:
+    get:
+      tags:
+        - booking-controller
+      operationId: getAllByUserId
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "400":
+          description: Bad Request
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BookingResponse"
+  /bookings/get/all/by/type/date/{type}/{date}:
+    get:
+      tags:
+        - booking-controller
+      operationId: getAllByTypeAndDate
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - HALL
+              - INTERNET
+              - GYM
+              - KITCHEN
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "400":
+          description: Bad Request
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BookingResponseWithUser"
+  /bookings/get/all/by/status/user/{status}/{userId}:
+    get:
+      tags:
+        - booking-controller
+      operationId: getAllByStatus
+      parameters:
+        - name: status
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - NOT_BOOKED
+              - BOOKED
+              - IN_PROGRESS
+              - CANCELLED
+              - COMPLETED
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "400":
+          description: Bad Request
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BookingResponse"
+  /bookings/get/all/by/date/{date}:
+    get:
+      tags:
+        - booking-controller
+      operationId: getAllByDate
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "400":
+          description: Bad Request
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BookingResponseWithUser"
+components:
+  schemas:
+    BookingTimeSlotRequest:
+      required:
+        - slotId
+      type: object
+      properties:
+        slotId:
+          type: string
+          format: uuid
+    BookingResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - NOT_BOOKED
+            - BOOKED
+            - IN_PROGRESS
+            - CANCELLED
+            - COMPLETED
+        type:
+          type: string
+    BookingResponseWithUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - NOT_BOOKED
+            - BOOKED
+            - IN_PROGRESS
+            - CANCELLED
+            - COMPLETED
+        type:
+          type: string
+

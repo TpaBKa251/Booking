@@ -12,19 +12,22 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
-import ru.tpu.hostel.booking.enums.BookingStatus;
-import ru.tpu.hostel.booking.enums.BookingType;
-import ru.tpu.hostel.booking.service.impl.states.BookedStateOld;
-import ru.tpu.hostel.booking.service.impl.states.CancelStateOld;
-import ru.tpu.hostel.booking.service.impl.states.CompletedStateOld;
-import ru.tpu.hostel.booking.service.impl.states.InProgressStateOld;
-import ru.tpu.hostel.booking.service.impl.states.NotBookedStateOld;
+import org.hibernate.proxy.HibernateProxy;
 import ru.tpu.hostel.booking.service.state.BookingState;
+import ru.tpu.hostel.booking.service.state.impl.BookedState;
+import ru.tpu.hostel.booking.service.state.impl.CancelState;
+import ru.tpu.hostel.booking.service.state.impl.CompletedState;
+import ru.tpu.hostel.booking.service.state.impl.InProgressState;
+import ru.tpu.hostel.booking.service.state.impl.NotBookedState;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
-@Table(name = "booking", schema = "booking")
+/**
+ * Сущность брони
+ */
+@Table(name = "bookings", schema = "booking")
 @Entity
 @Getter
 @Setter
@@ -60,13 +63,34 @@ public class Booking {
     @PostLoad
     public void initializeBookingState() {
         switch (this.status) {
-            case CANCELLED -> this.bookingState = new CancelStateOld();
-            case NOT_BOOKED -> this.bookingState = new NotBookedStateOld();
-            case BOOKED -> this.bookingState = new BookedStateOld();
-            case IN_PROGRESS -> this.bookingState = new InProgressStateOld();
-            case COMPLETED -> this.bookingState = new CompletedStateOld();
+            case CANCELLED -> this.bookingState = new CancelState();
+            case NOT_BOOKED -> this.bookingState = new NotBookedState();
+            case BOOKED -> this.bookingState = new BookedState();
+            case IN_PROGRESS -> this.bookingState = new InProgressState();
+            case COMPLETED -> this.bookingState = new CompletedState();
             default -> throw new IllegalStateException("Unknown booking status: " + this.status);
         }
     }
 
+    @Override
+    public final boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null) return false;
+        Class<?> oEffectiveClass = o instanceof HibernateProxy hibernateProxy
+                ? hibernateProxy.getHibernateLazyInitializer().getPersistentClass()
+                : o.getClass();
+        Class<?> thisEffectiveClass = this instanceof HibernateProxy hibernateProxy
+                ? hibernateProxy.getHibernateLazyInitializer().getPersistentClass()
+                : this.getClass();
+        if (thisEffectiveClass != oEffectiveClass) return false;
+        Booking booking = (Booking) o;
+        return getId() != null && Objects.equals(getId(), booking.getId());
+    }
+
+    @Override
+    public final int hashCode() {
+        return this instanceof HibernateProxy hibernateProxy
+                ? hibernateProxy.getHibernateLazyInitializer().getPersistentClass().hashCode()
+                : getClass().hashCode();
+    }
 }

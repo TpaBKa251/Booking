@@ -1,7 +1,7 @@
 package ru.tpu.hostel.booking.dto.request;
 
 import jakarta.validation.constraints.NotNull;
-import ru.tpu.hostel.booking.enums.BookingType;
+import ru.tpu.hostel.booking.entity.BookingType;
 
 import java.time.LocalDate;
 import java.util.UUID;

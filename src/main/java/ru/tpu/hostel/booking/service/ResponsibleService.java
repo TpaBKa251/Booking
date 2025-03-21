@@ -3,7 +3,7 @@ package ru.tpu.hostel.booking.service;
 import ru.tpu.hostel.booking.dto.request.ResponsibleSetRequest;
 import ru.tpu.hostel.booking.dto.response.ResponsibleResponse;
 import ru.tpu.hostel.booking.dto.response.ResponsibleResponseWithName;
-import ru.tpu.hostel.booking.enums.BookingType;
+import ru.tpu.hostel.booking.entity.BookingType;
 
 import java.time.LocalDate;
 

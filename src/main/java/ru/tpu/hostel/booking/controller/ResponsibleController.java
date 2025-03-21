@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.tpu.hostel.booking.dto.request.ResponsibleSetRequest;
 import ru.tpu.hostel.booking.dto.response.ResponsibleResponse;
 import ru.tpu.hostel.booking.dto.response.ResponsibleResponseWithName;
-import ru.tpu.hostel.booking.enums.BookingType;
+import ru.tpu.hostel.booking.entity.BookingType;
 import ru.tpu.hostel.booking.service.ResponsibleService;
 
 import java.time.LocalDate;

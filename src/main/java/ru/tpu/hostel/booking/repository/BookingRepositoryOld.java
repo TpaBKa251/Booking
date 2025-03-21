@@ -6,8 +6,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ru.tpu.hostel.booking.entity.BookingOld;
 import ru.tpu.hostel.booking.entity.TimeSlot;
-import ru.tpu.hostel.booking.enums.BookingStatus;
-import ru.tpu.hostel.booking.enums.BookingType;
+import ru.tpu.hostel.booking.entity.BookingStatus;
+import ru.tpu.hostel.booking.entity.BookingType;
 
 import java.time.LocalDateTime;
 import java.util.List;

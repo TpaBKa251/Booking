@@ -16,9 +16,9 @@ import ru.tpu.hostel.booking.dto.response.BookingResponse;
 import ru.tpu.hostel.booking.dto.response.BookingResponseWithUser;
 import ru.tpu.hostel.booking.dto.response.BookingShortResponse;
 import ru.tpu.hostel.booking.dto.response.TimeSlotResponse;
-import ru.tpu.hostel.booking.enums.BookingStatus;
-import ru.tpu.hostel.booking.enums.BookingType;
-import ru.tpu.hostel.booking.service.BookingServiceOld;
+import ru.tpu.hostel.booking.entity.BookingStatus;
+import ru.tpu.hostel.booking.entity.BookingType;
+import ru.tpu.hostel.booking.service.old.BookingServiceOld;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

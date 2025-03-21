@@ -10,7 +10,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
-import ru.tpu.hostel.booking.enums.BookingType;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
