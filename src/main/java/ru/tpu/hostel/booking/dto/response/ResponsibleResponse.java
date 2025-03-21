@@ -1,6 +1,6 @@
 package ru.tpu.hostel.booking.dto.response;
 
-import ru.tpu.hostel.booking.enums.BookingType;
+import ru.tpu.hostel.booking.entity.BookingType;
 
 import java.time.LocalDate;
 import java.util.UUID;

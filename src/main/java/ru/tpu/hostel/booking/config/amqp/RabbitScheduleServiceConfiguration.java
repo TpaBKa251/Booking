@@ -21,8 +21,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import ru.tpu.hostel.booking.rabbit.amqp.AmqpMessageSender;
-import ru.tpu.hostel.booking.rabbit.amqp.schedule.RabbitScheduleServiceMessageSender;
+import ru.tpu.hostel.booking.external.amqp.AmqpMessageSender;
+import ru.tpu.hostel.booking.external.amqp.schedule.RabbitScheduleServiceMessageSender;
 
 /**
  * Конфигурация брокера сообщений RabbitMQ для общения с микросервисом расписаний

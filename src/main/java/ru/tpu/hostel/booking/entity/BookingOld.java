@@ -14,14 +14,12 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
-import ru.tpu.hostel.booking.enums.BookingStatus;
-import ru.tpu.hostel.booking.enums.BookingType;
-import ru.tpu.hostel.booking.service.impl.states.BookedStateOld;
-import ru.tpu.hostel.booking.service.impl.states.CancelStateOld;
-import ru.tpu.hostel.booking.service.impl.states.CompletedStateOld;
-import ru.tpu.hostel.booking.service.impl.states.InProgressStateOld;
-import ru.tpu.hostel.booking.service.impl.states.NotBookedStateOld;
-import ru.tpu.hostel.booking.service.state.BookingState;
+import ru.tpu.hostel.booking.service.old.state.BookedStateOld;
+import ru.tpu.hostel.booking.service.old.state.CancelStateOld;
+import ru.tpu.hostel.booking.service.old.state.CompletedStateOld;
+import ru.tpu.hostel.booking.service.old.state.InProgressStateOld;
+import ru.tpu.hostel.booking.service.old.state.NotBookedStateOld;
+import ru.tpu.hostel.booking.service.old.state.BookingStateOld;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -55,7 +53,7 @@ public class BookingOld {
     private BookingStatus status;
 
     @Transient
-    private BookingState bookingState;
+    private BookingStateOld bookingState;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type")

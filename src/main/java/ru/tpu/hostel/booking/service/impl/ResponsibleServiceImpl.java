@@ -2,14 +2,14 @@ package ru.tpu.hostel.booking.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.tpu.hostel.booking.client.UserServiceClient;
+import ru.tpu.hostel.booking.external.feign.user.UserServiceClient;
 import ru.tpu.hostel.booking.dto.request.ResponsibleSetRequest;
 import ru.tpu.hostel.booking.dto.response.ResponsibleResponse;
 import ru.tpu.hostel.booking.dto.response.ResponsibleResponseWithName;
-import ru.tpu.hostel.booking.dto.response.UserShortResponse;
+import ru.tpu.hostel.booking.external.feign.user.dto.UserShortResponse;
 import ru.tpu.hostel.booking.entity.Responsible;
-import ru.tpu.hostel.booking.enums.BookingType;
-import ru.tpu.hostel.booking.exception.ResponsibleNotFoundException;
+import ru.tpu.hostel.booking.entity.BookingType;
+import ru.tpu.hostel.booking.common.error.ResponsibleNotFoundException;
 import ru.tpu.hostel.booking.mapper.ResponsibleMapper;
 import ru.tpu.hostel.booking.repository.ResponsibleRepository;
 import ru.tpu.hostel.booking.repository.TimeSlotRepository;
