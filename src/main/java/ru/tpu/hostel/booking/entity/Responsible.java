@@ -17,6 +17,7 @@ import ru.tpu.hostel.booking.enums.BookingType;
 import java.time.LocalDate;
 import java.util.UUID;
 
+@Deprecated(forRemoval = true)
 @Table(name = "responsibles", schema = "booking")
 @Entity
 @Getter
