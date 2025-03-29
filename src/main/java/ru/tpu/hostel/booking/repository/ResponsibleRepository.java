@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
+@Deprecated(forRemoval = true)
 @Repository
 public interface ResponsibleRepository extends JpaRepository<Responsible, UUID> {
 

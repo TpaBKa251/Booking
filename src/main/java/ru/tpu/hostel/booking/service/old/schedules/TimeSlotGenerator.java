@@ -10,12 +10,13 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import ru.tpu.hostel.booking.common.logging.LogFilter;
+import ru.tpu.hostel.booking.common.utils.TimeUtil;
+import ru.tpu.hostel.booking.entity.BookingType;
 import ru.tpu.hostel.booking.entity.Responsible;
 import ru.tpu.hostel.booking.entity.TimeSlot;
-import ru.tpu.hostel.booking.entity.BookingType;
 import ru.tpu.hostel.booking.repository.ResponsibleRepository;
 import ru.tpu.hostel.booking.repository.TimeSlotRepository;
-import ru.tpu.hostel.booking.common.utils.TimeNow;
 
 import java.io.IOException;
 import java.time.DayOfWeek;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Deprecated(forRemoval = true)
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -48,6 +50,7 @@ public class TimeSlotGenerator {
     private final ResponsibleRepository responsibleRepository;
 
     @Bean
+    @LogFilter(enableResultLogging = false)
     public ApplicationRunner initializeGymTimeSlots() {
         return args -> generateSlotsForWeek();
     }
@@ -72,7 +75,7 @@ public class TimeSlotGenerator {
             List<DayOfWeek> workingDays = parseWorkingDays(schedule.getWorkingDays());
             Map<String, List<SchedulesConfig.TimeRange>> reservedHours = schedule.getReservedHours();
 
-            LocalDate today = TimeNow.now().toLocalDate();
+            LocalDate today = TimeUtil.now().toLocalDate();
 
             LocalDate currentDate = today.plusDays(7);
             DayOfWeek currentDayOfWeek = currentDate.getDayOfWeek();
@@ -105,7 +108,7 @@ public class TimeSlotGenerator {
         }
 
         List<TimeSlot> slots = new ArrayList<>();
-        LocalDate endOfWeek = TimeNow.now().toLocalDate().plusDays(8);
+        LocalDate endOfWeek = TimeUtil.now().toLocalDate().plusDays(8);
 
         for (SchedulesConfig.Schedule schedule : config.getSchedules().values()) {
             List<DayOfWeek> workingDays = parseWorkingDays(schedule.getWorkingDays());
@@ -113,8 +116,8 @@ public class TimeSlotGenerator {
 
             TimeSlot lastSlot = timeSlotRepository.findLastByType(BookingType.valueOf(schedule.getType())).orElse(null);
 
-            LocalDate currentDate = (lastSlot == null || lastSlot.getStartTime().toLocalDate().isBefore(TimeNow.now().toLocalDate()))
-                    ? TimeNow.now().toLocalDate()
+            LocalDate currentDate = (lastSlot == null || lastSlot.getStartTime().toLocalDate().isBefore(TimeUtil.now().toLocalDate()))
+                    ? TimeUtil.now().toLocalDate()
                     : lastSlot.getStartTime().toLocalDate().plusDays(1);
 
             while (currentDate.isBefore(endOfWeek)) {

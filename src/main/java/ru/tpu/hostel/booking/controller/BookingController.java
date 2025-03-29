@@ -34,7 +34,7 @@ public class BookingController {
      * @param userId ID юзера, который делает бронь
      * @return ДТО-ответ с информацией о брони
      */
-    //@PostMapping("/timeslot/{userId}")
+    //@PostMapping("/{userId}")
     public BookingResponse book(@RequestBody @Valid BookingTimeSlotRequest bookingTimeSlotRequestDto, @PathVariable UUID userId) {
         return bookingService.createBooking(bookingTimeSlotRequestDto, userId);
     }
@@ -58,7 +58,7 @@ public class BookingController {
      * @param userId ID юзера
      * @return список ДТО-ответов с информацией о бронях
      */
-    //@GetMapping("/get/all/by/status/user/{status}/{userId}")
+    //@GetMapping("/all/by/status/user/{status}/{userId}")
     public List<BookingResponse> getAllByStatus(@PathVariable BookingStatus status, @PathVariable UUID userId) {
         return bookingService.getUserBookingsByStatus(status, userId);
     }
@@ -69,7 +69,7 @@ public class BookingController {
      * @param userId ID юзера
      * @return список ДТО-ответов с информацией о бронях
      */
-    //@GetMapping("/get/all/by/user/{userId}")
+    //@GetMapping("/all/by/user/{userId}")
     public List<BookingResponse> getAllByUserId(@PathVariable UUID userId) {
         return bookingService.getBookingsByUser(userId);
     }
@@ -81,7 +81,7 @@ public class BookingController {
      * @param date дата
      * @return список ДТО-ответов с информацией о бронях с ID юзера
      */
-    //@GetMapping("/get/all/by/type/date/{type}/{date}")
+    //@GetMapping("/all/by/type/date/{type}/{date}")
     public List<BookingResponseWithUser> getAllByTypeAndDate(
             @PathVariable BookingType type,
             @PathVariable LocalDate date
@@ -95,7 +95,7 @@ public class BookingController {
      * @param date дата
      * @return список ДТО-ответов с информацией о бронях с ID юзера
      */
-    //@GetMapping("/get/all/by/date/{date}")
+    //@GetMapping("/all/by/date/{date}")
     public List<BookingResponseWithUser> getAllByDate(@PathVariable LocalDate date) {
         return bookingService.getBookingsByDateWithUser(date);
     }

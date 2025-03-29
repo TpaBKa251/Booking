@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import ru.tpu.hostel.booking.common.logging.LogFilter;
 import ru.tpu.hostel.booking.entity.BookingOld;
 import ru.tpu.hostel.booking.repository.BookingRepositoryOld;
 import ru.tpu.hostel.booking.service.state.BookingStateUpdater;
@@ -15,9 +16,9 @@ import java.util.List;
 /**
  * Этот класс устарел и будет удалён в будущем.
  * Вместо него используйте {@link BookingStateUpdater}.
- * @deprecated Класс заменён на {@link BookingStateUpdater}.
  *
  * @see BookingStateUpdater
+ * @deprecated Класс заменён на {@link BookingStateUpdater}.
  */
 @SuppressWarnings("removal")
 @Deprecated(forRemoval = true)
@@ -29,6 +30,7 @@ public class BookingStateImplOld {
     private final BookingRepositoryOld bookingRepository;
 
     @Bean
+    @LogFilter(enableResultLogging = false)
     public ApplicationRunner updateBookingStatusesOnStarts() {
         return args -> updateBookingStatuses();
     }

@@ -12,6 +12,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.proxy.HibernateProxy;
 import ru.tpu.hostel.booking.service.state.BookingState;
 import ru.tpu.hostel.booking.service.state.impl.BookedState;
@@ -31,6 +32,7 @@ import java.util.UUID;
 @Entity
 @Getter
 @Setter
+@ToString(exclude = "bookingState")
 public class Booking {
 
     @Id
@@ -68,7 +70,7 @@ public class Booking {
             case BOOKED -> this.bookingState = new BookedState();
             case IN_PROGRESS -> this.bookingState = new InProgressState();
             case COMPLETED -> this.bookingState = new CompletedState();
-            default -> throw new IllegalStateException("Unknown booking status: " + this.status);
+            default -> throw new IllegalArgumentException("Неизвестное состояние: " + this.status);
         }
     }
 

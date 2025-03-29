@@ -12,12 +12,11 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.core.MessagePropertiesBuilder;
-import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import ru.tpu.hostel.booking.external.amqp.AmqpMessageSender;
+import ru.tpu.hostel.booking.common.exception.ServiceException;
+import ru.tpu.hostel.booking.common.utils.TimeUtil;
 import ru.tpu.hostel.booking.config.amqp.RabbitScheduleServiceQueueingProperties;
-import ru.tpu.hostel.booking.common.error.SlotNotFoundException;
-import ru.tpu.hostel.booking.common.utils.TimeNow;
+import ru.tpu.hostel.booking.external.amqp.AmqpMessageSender;
 
 import java.time.ZonedDateTime;
 import java.util.Date;
@@ -39,7 +38,7 @@ public class RabbitScheduleServiceMessageSender implements AmqpMessageSender {
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .disable(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS)
             .disable(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS)
-            .setTimeZone(TimeNow.getTimeZone())
+            .setTimeZone(TimeUtil.getTimeZone())
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
             .writer();
 
@@ -48,10 +47,10 @@ public class RabbitScheduleServiceMessageSender implements AmqpMessageSender {
     private final RabbitScheduleServiceQueueingProperties queueProperties;
 
     public RabbitScheduleServiceMessageSender(
-            ConnectionFactory schedulesServiceConnectionFactory,
+            RabbitTemplate rabbitTemplate,
             RabbitScheduleServiceQueueingProperties properties
     ) {
-        this.rabbitTemplate = new RabbitTemplate(schedulesServiceConnectionFactory);
+        this.rabbitTemplate = rabbitTemplate;
         this.rabbitTemplate.setExchange(properties.getExchangeName());
         this.rabbitTemplate.setRoutingKey(properties.getRoutingKey());
         this.queueProperties = properties;
@@ -65,7 +64,7 @@ public class RabbitScheduleServiceMessageSender implements AmqpMessageSender {
     }
 
     @Override
-    public void send(String messageId, Object messagePayload, String routingKey) throws JsonProcessingException {
+    public void send(String messageId, Object messagePayload, String routingKey) {
         log.error(NOT_IMPLEMENTED_YET);
     }
 
@@ -85,14 +84,14 @@ public class RabbitScheduleServiceMessageSender implements AmqpMessageSender {
                 || replyMessage.getBody() == null
                 || replyMessage.getBody().length == 0
                 || "null".equals(new String(replyMessage.getBody()))) {
-            throw new SlotNotFoundException();
+            throw new ServiceException.NotFound("Слот не найден");
         }
 
         return replyMessage;
     }
 
     private MessageProperties getMessageProperties(String messageId) {
-        ZonedDateTime now = TimeNow.getZonedDateTime();
+        ZonedDateTime now = TimeUtil.getZonedDateTime();
         long nowMillis = now.toInstant().toEpochMilli();
 
         return MessagePropertiesBuilder.newInstance()

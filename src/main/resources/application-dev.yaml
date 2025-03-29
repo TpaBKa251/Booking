@@ -8,3 +8,7 @@ spring:
 rabbitmq:
   schedules-service:
     addresses: localhost:5672
+
+rest:
+  base-url:
+    user-service: http://localhost:8081

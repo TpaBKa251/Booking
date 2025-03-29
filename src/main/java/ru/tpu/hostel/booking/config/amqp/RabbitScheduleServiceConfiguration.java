@@ -3,6 +3,7 @@ package ru.tpu.hostel.booking.config.amqp;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.core.Binding;
@@ -28,6 +29,7 @@ import ru.tpu.hostel.booking.external.amqp.schedule.RabbitScheduleServiceMessage
  * Конфигурация брокера сообщений RabbitMQ для общения с микросервисом расписаний
  */
 @Configuration
+@Slf4j
 @EnableConfigurationProperties({RabbitSchedulesServiceProperties.class, RabbitScheduleServiceQueueingProperties.class})
 public class RabbitScheduleServiceConfiguration {
 
@@ -70,6 +72,7 @@ public class RabbitScheduleServiceConfiguration {
     ) {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setMessageConverter(messageConverter);
+        rabbitTemplate.setObservationEnabled(true);
         return rabbitTemplate;
     }
 
@@ -121,10 +124,10 @@ public class RabbitScheduleServiceConfiguration {
 
     @Bean(SCHEDULES_SERVICE_AMQP_MESSAGE_SENDER)
     public AmqpMessageSender schedulesServiceAmqpMessageSender(
-            @Qualifier(SCHEDULES_SERVICE_CONNECTION_FACTORY) ConnectionFactory connectionFactory,
+            @Qualifier(SCHEDULES_SERVICE_RABBIT_TEMPLATE) RabbitTemplate rabbitTemplate,
             RabbitScheduleServiceQueueingProperties queueProperties
     ) {
-        return new RabbitScheduleServiceMessageSender(connectionFactory, queueProperties);
+        return new RabbitScheduleServiceMessageSender(rabbitTemplate, queueProperties);
     }
 
 }

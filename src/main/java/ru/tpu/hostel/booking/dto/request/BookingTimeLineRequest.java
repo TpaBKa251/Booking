@@ -7,6 +7,7 @@ import ru.tpu.hostel.booking.entity.BookingType;
 
 import java.time.LocalDateTime;
 
+@Deprecated(forRemoval = true)
 public record BookingTimeLineRequest(
 
         @NotNull(message = "Тип ресурса для брони не может быть пустым")

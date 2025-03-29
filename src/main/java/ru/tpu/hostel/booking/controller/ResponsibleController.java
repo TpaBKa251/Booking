@@ -12,10 +12,13 @@ import ru.tpu.hostel.booking.dto.request.ResponsibleSetRequest;
 import ru.tpu.hostel.booking.dto.response.ResponsibleResponse;
 import ru.tpu.hostel.booking.dto.response.ResponsibleResponseWithName;
 import ru.tpu.hostel.booking.entity.BookingType;
-import ru.tpu.hostel.booking.service.ResponsibleService;
+import ru.tpu.hostel.booking.service.old.ResponsibleService;
 
 import java.time.LocalDate;
 
+/**
+ * Под списание
+ */
 @RestController
 @RequestMapping("/responsibles")
 @RequiredArgsConstructor

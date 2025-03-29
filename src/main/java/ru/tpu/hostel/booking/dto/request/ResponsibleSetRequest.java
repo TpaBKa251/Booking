@@ -6,6 +6,7 @@ import ru.tpu.hostel.booking.entity.BookingType;
 import java.time.LocalDate;
 import java.util.UUID;
 
+@Deprecated(forRemoval = true)
 public record ResponsibleSetRequest(
         @NotNull(message = "Дата назначения ответственного не может быть пустой")
         LocalDate date,

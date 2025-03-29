@@ -1,4 +1,4 @@
-package ru.tpu.hostel.booking.external.feign.user.dto;
+package ru.tpu.hostel.booking.external.rest.user.dto;
 
 import java.util.UUID;
 

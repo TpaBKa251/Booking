@@ -2,9 +2,8 @@ package ru.tpu.hostel.booking.service.old;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import ru.tpu.hostel.booking.external.feign.user.UserServiceClient;
+import ru.tpu.hostel.booking.common.exception.ServiceException;
 import ru.tpu.hostel.booking.dto.request.BookingTimeLineRequest;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequest;
 import ru.tpu.hostel.booking.dto.response.BookingResponse;
@@ -14,9 +13,7 @@ import ru.tpu.hostel.booking.dto.response.TimeSlotResponse;
 import ru.tpu.hostel.booking.entity.BookingOld;
 import ru.tpu.hostel.booking.entity.BookingStatus;
 import ru.tpu.hostel.booking.entity.BookingType;
-import ru.tpu.hostel.booking.common.error.BookingNotFoundException;
-import ru.tpu.hostel.booking.common.error.InvalidTimeBookingException;
-import ru.tpu.hostel.booking.common.error.UserNotFound;
+import ru.tpu.hostel.booking.external.rest.user.UserServiceClient;
 import ru.tpu.hostel.booking.mapper.BookingMapperOld;
 import ru.tpu.hostel.booking.repository.BookingRepositoryOld;
 import ru.tpu.hostel.booking.service.impl.BookingServiceImpl;
@@ -51,7 +48,7 @@ public class BookingServiceImplOld implements BookingServiceOld {
     @Override
     public BookingResponse createBooking(BookingTimeLineRequest bookingTimeLineRequestDto, UUID userId) {
         if (!bookingTimeLineRequestDto.bookingType().equals(BookingType.HALL)) {
-            throw new InvalidTimeBookingException("Вы не можете забронировать слотовую на кастомное время");
+            throw new ServiceException.BadRequest("Вы не можете забронировать слотовую на кастомное время");
         }
         //checkUser(userId);
 
@@ -84,7 +81,7 @@ public class BookingServiceImplOld implements BookingServiceOld {
         //checkUser(userId);
 
         BookingOld booking = bookingRepository.findById(bookingId)
-                .orElseThrow(BookingNotFoundException::new);
+                .orElseThrow(() -> new ServiceException.NotFound("Бронь не найдена"));
 
         if (!booking.getUser().equals(userId)) {
             List<String> userRoles = userServiceClient.getAllRolesByUserId(userId);
@@ -102,7 +99,7 @@ public class BookingServiceImplOld implements BookingServiceOld {
                 }
             }
 
-            throw new BookingNotFoundException("Вы не можете закрывать чужие брони");
+            throw new ServiceException.Forbidden("Вы не можете закрывать чужие брони");
         }
 
         booking.getBookingState().cancelBooking(booking, bookingRepository);
@@ -113,7 +110,7 @@ public class BookingServiceImplOld implements BookingServiceOld {
     @Override
     public BookingResponse getBooking(UUID bookingId) {
         return BookingMapperOld.mapBookingToBookingResponseDto(bookingRepository.findById(bookingId)
-                .orElseThrow(BookingNotFoundException::new));
+                .orElseThrow(() -> new ServiceException.NotFound("Бронь не найдена")));
     }
 
     @Override
@@ -168,16 +165,6 @@ public class BookingServiceImplOld implements BookingServiceOld {
      */
     @Deprecated
     private void checkUser(UUID userId) {
-        ResponseEntity<?> response;
-
-        try {
-            response = userServiceClient.getUserById(userId);
-        } catch (Exception e) {
-            throw new UserNotFound("Пользователь не найден");
-        }
-
-        if (!response.getStatusCode().is2xxSuccessful()) {
-            throw new UserNotFound("Пользователь не найден");
-        }
+        userServiceClient.getUserById(userId);
     }
 }

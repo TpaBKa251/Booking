@@ -1,15 +1,19 @@
 package ru.tpu.hostel.booking.common.utils;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import lombok.experimental.UtilityClass;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.TimeZone;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class TimeNow {
+/**
+ * Утилита для работы с временем
+ */
+@UtilityClass
+public final class TimeUtil {
 
     private static final ZoneId UTC7_ZONE = ZoneId.of("UTC+7");
 
@@ -23,6 +27,12 @@ public final class TimeNow {
 
     public static ZonedDateTime getZonedDateTime() {
         return ZonedDateTime.now(UTC7_ZONE);
+    }
+
+    public static String getLocalDateTimeStingFromMillis(long millis) {
+        return LocalDateTime
+                .ofInstant(Instant.ofEpochMilli(millis), UTC7_ZONE)
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"));
     }
 
 }

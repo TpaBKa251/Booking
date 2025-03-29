@@ -4,10 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.core.Message;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-import ru.tpu.hostel.booking.external.feign.user.UserServiceClient;
+import ru.tpu.hostel.booking.common.exception.ServiceException;
+import ru.tpu.hostel.booking.common.utils.TimeUtil;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequest;
 import ru.tpu.hostel.booking.dto.response.BookingResponse;
 import ru.tpu.hostel.booking.dto.response.BookingResponseWithUser;
@@ -15,16 +14,12 @@ import ru.tpu.hostel.booking.dto.response.TimeSlotResponse;
 import ru.tpu.hostel.booking.entity.Booking;
 import ru.tpu.hostel.booking.entity.BookingStatus;
 import ru.tpu.hostel.booking.entity.BookingType;
-import ru.tpu.hostel.booking.common.error.AccessException;
-import ru.tpu.hostel.booking.common.error.BookingNotFoundException;
-import ru.tpu.hostel.booking.common.error.InvalidTimeBookingException;
-import ru.tpu.hostel.booking.common.error.SlotAlreadyBookedException;
-import ru.tpu.hostel.booking.mapper.BookingMapper;
 import ru.tpu.hostel.booking.external.amqp.AmqpMessageSender;
 import ru.tpu.hostel.booking.external.amqp.schedule.dto.Timeslot;
+import ru.tpu.hostel.booking.external.rest.user.UserServiceClient;
+import ru.tpu.hostel.booking.mapper.BookingMapper;
 import ru.tpu.hostel.booking.repository.BookingRepository;
 import ru.tpu.hostel.booking.service.BookingService;
-import ru.tpu.hostel.booking.common.utils.TimeNow;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -61,15 +56,15 @@ public class BookingServiceImpl implements BookingService {
             );
             timeslot = objectMapper.readValue(message.getBody(), Timeslot.class);
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Сервис расписаний не отвечает", e);
+            throw new ServiceException.ServiceUnavailable("Сервис расписаний не отвечает");
         }
 
         List<Booking> bookings = bookingRepository.findAllByStatusNotAndTimeSlot(CANCELLED, timeslot.id());
         if (bookings.size() == timeslot.limit()) {
-            throw new SlotAlreadyBookedException("Слот уже забронирован");
+            throw new ServiceException.BadRequest("Слот уже забронирован");
         }
-        if (timeslot.startTime().isBefore(TimeNow.now())) {
-            throw new InvalidTimeBookingException("Вы можете забронировать только слоты,"
+        if (timeslot.startTime().isBefore(TimeUtil.now())) {
+            throw new ServiceException.BadRequest("Вы можете забронировать только слоты,"
                     + " время начала которых позже текущего времени");
         }
 
@@ -80,7 +75,7 @@ public class BookingServiceImpl implements BookingService {
                 BOOKED
         );
         if (bookingOptional.isPresent()) {
-            throw new InvalidTimeBookingException("Вы не можете забронировать слот повторно");
+            throw new ServiceException.BadRequest("Вы не можете забронировать слот повторно");
         }
 
         Booking booking = new Booking();
@@ -107,7 +102,8 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingResponse cancelBooking(UUID bookingId, UUID userId) {
-        Booking bookingToCancel = bookingRepository.findById(bookingId).orElseThrow(BookingNotFoundException::new);
+        Booking bookingToCancel = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ServiceException.NotFound("Бронь не найдена"));
 
         if (bookingToCancel.getUser().equals(userId)) {
             bookingToCancel.getBookingState().cancelBooking(bookingToCancel, bookingRepository);
@@ -125,7 +121,7 @@ public class BookingServiceImpl implements BookingService {
             }
         }
 
-        throw new AccessException("Вы не можете закрыть чужую бронь");
+        throw new ServiceException.Forbidden("Вы не можете закрыть чужую бронь");
     }
 
     @Override

@@ -1,25 +1,25 @@
-package ru.tpu.hostel.booking.service.impl;
+package ru.tpu.hostel.booking.service.old;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.tpu.hostel.booking.external.feign.user.UserServiceClient;
+import ru.tpu.hostel.booking.common.exception.ServiceException;
 import ru.tpu.hostel.booking.dto.request.ResponsibleSetRequest;
 import ru.tpu.hostel.booking.dto.response.ResponsibleResponse;
 import ru.tpu.hostel.booking.dto.response.ResponsibleResponseWithName;
-import ru.tpu.hostel.booking.external.feign.user.dto.UserShortResponse;
-import ru.tpu.hostel.booking.entity.Responsible;
 import ru.tpu.hostel.booking.entity.BookingType;
-import ru.tpu.hostel.booking.common.error.ResponsibleNotFoundException;
+import ru.tpu.hostel.booking.entity.Responsible;
+import ru.tpu.hostel.booking.external.rest.user.UserServiceClient;
+import ru.tpu.hostel.booking.external.rest.user.dto.UserShortResponse;
 import ru.tpu.hostel.booking.mapper.ResponsibleMapper;
 import ru.tpu.hostel.booking.repository.ResponsibleRepository;
 import ru.tpu.hostel.booking.repository.TimeSlotRepository;
-import ru.tpu.hostel.booking.service.ResponsibleService;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Deprecated(forRemoval = true)
 public class ResponsibleServiceImpl implements ResponsibleService {
 
     private final ResponsibleRepository responsibleRepository;
@@ -46,7 +46,7 @@ public class ResponsibleServiceImpl implements ResponsibleService {
                 responsible.setType(responsibleSetDto.type());
                 responsible.setDate(responsibleSetDto.date());
             } else {
-                throw new ResponsibleNotFoundException();
+                throw new ServiceException.NotFound("Ответственный не найден");
             }
         }
 
@@ -65,7 +65,7 @@ public class ResponsibleServiceImpl implements ResponsibleService {
             }
         }
 
-        throw new ResponsibleNotFoundException();
+        throw new ServiceException.NotFound("Ответственный не найден");
     }
 
     //Для отображения человека с именем и ролью (Показывает, кто ответственный на день)
@@ -81,9 +81,8 @@ public class ResponsibleServiceImpl implements ResponsibleService {
         }
 
         //Ищется ответственный по типу и дате
-        Responsible responsible = responsibleRepository.findByTypeAndDate(type, date).orElseThrow(
-                ResponsibleNotFoundException::new
-        );
+        Responsible responsible = responsibleRepository.findByTypeAndDate(type, date)
+                .orElseThrow(() -> new ServiceException.NotFound("Ответственный не найден"));
 
         //Если пользователь не найден (Не назначен), то на мобилку идет пустота
         if (responsible.getUser() == null) {

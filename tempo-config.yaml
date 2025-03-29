@@ -1,0 +1,56 @@
+server:
+  http_listen_port: 3200
+  grpc_listen_port: 9095
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: "0.0.0.0:4317"
+        http:
+          endpoint: "0.0.0.0:4318"
+  # Параметры лимитов через CLI-флаги (не через YAML)
+  # Эти параметры НЕ поддерживаются в YAML-конфиге для версии 2.3.0
+  # Используйте CLI-флаги в docker-compose.yml
+
+ingester:
+  trace_idle_period: 10s
+  lifecycler:
+    ring:
+      kvstore:
+        store: memberlist
+      replication_factor: 1
+  # Лимиты также задаются через CLI-флаги
+  # Эти параметры НЕ поддерживаются в YAML-конфиге для версии 2.3.0
+
+querier:
+  frontend_worker:
+    frontend_address: "tempo-query-frontend:9095"
+
+#metrics_generator:
+#  storage:
+#    path: /var/tempo/metrics
+#  registry:
+#    external_labels:
+#      source: tempo
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /var/tempo/traces
+    wal:
+      path: /var/tempo/wal
+    blocklist_poll: 5m
+
+compactor:
+  compaction:
+    block_retention: 1h
+    compacted_block_retention: 10m
+
+memberlist:
+  bind_port: 7946
+  advertise_port: 7946
+  join_members:
+    - tempo

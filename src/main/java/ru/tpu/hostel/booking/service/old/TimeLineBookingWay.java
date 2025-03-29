@@ -2,16 +2,16 @@ package ru.tpu.hostel.booking.service.old;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.tpu.hostel.booking.common.exception.ServiceException;
+import ru.tpu.hostel.booking.common.utils.TimeUtil;
 import ru.tpu.hostel.booking.dto.request.BookingTimeLineRequest;
 import ru.tpu.hostel.booking.dto.response.BookingResponse;
 import ru.tpu.hostel.booking.dto.response.BookingShortResponse;
 import ru.tpu.hostel.booking.entity.BookingOld;
 import ru.tpu.hostel.booking.entity.BookingStatus;
 import ru.tpu.hostel.booking.entity.BookingType;
-import ru.tpu.hostel.booking.common.error.InvalidTimeBookingException;
 import ru.tpu.hostel.booking.mapper.BookingMapperOld;
 import ru.tpu.hostel.booking.repository.BookingRepositoryOld;
-import ru.tpu.hostel.booking.common.utils.TimeNow;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -35,10 +35,10 @@ public class TimeLineBookingWay {
 
     public BookingResponse createBooking(BookingTimeLineRequest bookingTimeLineRequestDto, UUID userId) {
         if (
-                bookingTimeLineRequestDto.startTime().isBefore(TimeNow.now())
-                        || bookingTimeLineRequestDto.endTime().isBefore(TimeNow.now())
+                bookingTimeLineRequestDto.startTime().isBefore(TimeUtil.now())
+                        || bookingTimeLineRequestDto.endTime().isBefore(TimeUtil.now())
         ) {
-            throw new InvalidTimeBookingException("Неверное время бронирования");
+            throw new ServiceException.BadRequest("Неверное время бронирования");
         }
 
         if (!bookingTimeLineRequestDto.startTime().toLocalDate()
@@ -47,23 +47,23 @@ public class TimeLineBookingWay {
             if (!bookingTimeLineRequestDto.endTime().minusDays(1).toLocalDate()
                     .equals(bookingTimeLineRequestDto.startTime().toLocalDate())
             ) {
-                throw new InvalidTimeBookingException("Неверное время бронирования");
+                throw new ServiceException.BadRequest("Неверное время бронирования");
             }
 
             if (!bookingTimeLineRequestDto.endTime().toLocalTime().equals(endBookingTime)) {
-                throw new InvalidTimeBookingException("Дни старта и конца брони должны быть одинаковыми");
+                throw new ServiceException.BadRequest("Дни старта и конца брони должны быть одинаковыми");
             }
         }
 
         if (bookingTimeLineRequestDto.startTime().getHour() < startBookingTime.getHour()) {
-            throw new InvalidTimeBookingException("Бронь должна быть между 6:00 и 23:59");
+            throw new ServiceException.BadRequest("Бронь должна быть между 6:00 и 23:59");
         }
 
         if (
                 bookingTimeLineRequestDto.startTime().isAfter(bookingTimeLineRequestDto.endTime())
                         || bookingTimeLineRequestDto.startTime().equals(bookingTimeLineRequestDto.endTime())
         ) {
-            throw new InvalidTimeBookingException("Стартовое время должно быть раньше конечного");
+            throw new ServiceException.BadRequest("Стартовое время должно быть раньше конечного");
         }
 
         List<BookingOld> bookedBookings = bookingRepository
@@ -72,7 +72,7 @@ public class TimeLineBookingWay {
         for (BookingOld booking : bookedBookings) {
             if (bookingTimeLineRequestDto.startTime().isBefore(booking.getEndTime())
                     && bookingTimeLineRequestDto.endTime().isAfter(booking.getStartTime())) {
-                throw new InvalidTimeBookingException(
+                throw new ServiceException.BadRequest(
                         "Ваша бронь пересекается с другой: "
                                 + BookingMapperOld.mapBookingToBookingShortResponseDto(booking)
                 );
@@ -92,8 +92,8 @@ public class TimeLineBookingWay {
     }
 
     public List<BookingShortResponse> getAvailableTimeBookings(LocalDate date, BookingType bookingType) {
-        if (LocalDate.now().plusDays(7).isBefore(date) || date.isBefore(TimeNow.now().toLocalDate())) {
-            throw new InvalidTimeBookingException("Вы можете просматривать и бронировать только на неделю вперед");
+        if (LocalDate.now().plusDays(7).isBefore(date) || date.isBefore(TimeUtil.now().toLocalDate())) {
+            throw new ServiceException.BadRequest("Вы можете просматривать и бронировать только на неделю вперед");
         }
 
         List<BookingOld> bookedBookings = bookingRepository.findAllByStatusAndType(BookingStatus.BOOKED, bookingType);
@@ -111,10 +111,10 @@ public class TimeLineBookingWay {
 
         LocalTime currentStartTime;
 
-        if (!date.equals(TimeNow.now().toLocalDate())) {
+        if (!date.equals(TimeUtil.now().toLocalDate())) {
             currentStartTime = startBookingTime;
         } else {
-            currentStartTime = TimeNow.now().toLocalTime()
+            currentStartTime = TimeUtil.now().toLocalTime()
                     .plusHours(1)
                     .withMinute(0)
                     .withSecond(0)

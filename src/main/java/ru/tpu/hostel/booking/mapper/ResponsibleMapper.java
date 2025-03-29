@@ -5,6 +5,7 @@ import ru.tpu.hostel.booking.dto.response.ResponsibleResponse;
 import ru.tpu.hostel.booking.dto.response.ResponsibleResponseWithName;
 import ru.tpu.hostel.booking.entity.Responsible;
 
+@Deprecated(forRemoval = true)
 @Component
 public class ResponsibleMapper {
 

@@ -3,23 +3,21 @@ package ru.tpu.hostel.booking.service.old;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.tpu.hostel.booking.common.exception.ServiceException;
+import ru.tpu.hostel.booking.common.utils.TimeUtil;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequest;
 import ru.tpu.hostel.booking.dto.response.BookingResponse;
 import ru.tpu.hostel.booking.dto.response.TimeSlotResponse;
 import ru.tpu.hostel.booking.entity.BookingOld;
-import ru.tpu.hostel.booking.entity.TimeSlot;
 import ru.tpu.hostel.booking.entity.BookingStatus;
 import ru.tpu.hostel.booking.entity.BookingType;
-import ru.tpu.hostel.booking.common.error.InvalidTimeBookingException;
-import ru.tpu.hostel.booking.common.error.SlotAlreadyBookedException;
-import ru.tpu.hostel.booking.common.error.SlotNotFoundException;
+import ru.tpu.hostel.booking.entity.TimeSlot;
+import ru.tpu.hostel.booking.external.amqp.AmqpMessageSender;
 import ru.tpu.hostel.booking.mapper.BookingMapperOld;
 import ru.tpu.hostel.booking.mapper.SlotMapper;
-import ru.tpu.hostel.booking.external.amqp.AmqpMessageSender;
 import ru.tpu.hostel.booking.repository.BookingRepositoryOld;
 import ru.tpu.hostel.booking.repository.ResponsibleRepository;
 import ru.tpu.hostel.booking.repository.TimeSlotRepository;
-import ru.tpu.hostel.booking.common.utils.TimeNow;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -59,22 +57,22 @@ public class TimeSlotBookingWay {
         }
 
         TimeSlot timeSlot = timeSlotRepository.findById(bookingTimeSlotRequestDto.slotId())
-                .orElseThrow(() -> new SlotNotFoundException("Слот не найден"));
+                .orElseThrow(() -> new ServiceException.NotFound("Слот не найден"));
 
         List<BookingOld> bookings = bookingRepository.findAllByStatusNotAndTimeSlot(BookingStatus.CANCELLED, timeSlot);
 
         if (bookings.size() == timeSlot.getLimit()) {
-            throw new SlotAlreadyBookedException("Слот уже забронирован");
+            throw new ServiceException.BadRequest("Слот уже забронирован");
         }
 
-        if (timeSlot.getStartTime().isBefore(TimeNow.now())) {
-            throw new InvalidTimeBookingException("Вы можете забронировать только слоты,"
+        if (timeSlot.getStartTime().isBefore(TimeUtil.now())) {
+            throw new ServiceException.BadRequest("Вы можете забронировать только слоты,"
                     + " время начала которых позже текущего времени");
         }
 
         // Возможно это не надо
         if (bookingRepository.findByTimeSlotAndUserAndStatus(timeSlot, userId, BookingStatus.BOOKED).isPresent()) {
-            throw new InvalidTimeBookingException("Вы не можете забронировать слот повторно");
+            throw new ServiceException.BadRequest("Вы не можете забронировать слот повторно");
         }
 
         BookingOld booking = new BookingOld();
@@ -90,8 +88,8 @@ public class TimeSlotBookingWay {
     }
 
     public List<TimeSlotResponse> getAvailableTimeSlots(LocalDate date, BookingType bookingType, UUID userId) {
-        if (LocalDate.now().plusDays(7).isBefore(date) || date.isBefore(TimeNow.now().toLocalDate())) {
-            throw new InvalidTimeBookingException("Вы можете просматривать и бронировать слоты только на неделю вперед");
+        if (LocalDate.now().plusDays(7).isBefore(date) || date.isBefore(TimeUtil.now().toLocalDate())) {
+            throw new ServiceException.BadRequest("Вы можете просматривать и бронировать слоты только на неделю вперед");
         }
 
         List<TimeSlot> timeSlots = timeSlotRepository.findByType(bookingType);
@@ -100,7 +98,7 @@ public class TimeSlotBookingWay {
 
         for (TimeSlot timeSlot : timeSlots) {
             if (timeSlot.getStartTime().toLocalDate().equals(date)
-                    && timeSlot.getStartTime().isAfter(TimeNow.now())
+                    && timeSlot.getStartTime().isAfter(TimeUtil.now())
             ) {
                 List<BookingOld> bookings = bookingRepository.findAllByTimeSlot(timeSlot)
                         .stream()
