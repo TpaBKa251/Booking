@@ -9,8 +9,7 @@ public enum BookingType {
     HALL("Зал"),
     INTERNET("Интернет"),
     GYM("Тренажерный зал"),
-    KITCHEN("Кухня")
-    ;
+    KITCHEN("Кухня");
 
     private final String bookingTypeName;
 }
