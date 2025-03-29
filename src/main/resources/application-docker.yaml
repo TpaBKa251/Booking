@@ -1,3 +1,7 @@
 schedules:
   timeslots:
     path: /app/src/main/java/ru/tpu/hostel/booking/service/old/schedules/schedules.json
+
+otlp:
+  tracing:
+    export-enabled: false

@@ -4,15 +4,17 @@ import feign.RequestInterceptor;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanContext;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * Интерсептор для добавления в заголовок REST запросов информации о трассировке
  */
 @Slf4j
-//@Configuration
+@Configuration
 public class HttpRestInterceptor {
 
-    //@Bean
+    @Bean
     public RequestInterceptor tracingHttpRequestInterceptor() {
         return requestTemplate -> {
             Span currentSpan = Span.current();

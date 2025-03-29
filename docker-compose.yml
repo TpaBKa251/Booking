@@ -26,7 +26,8 @@ services:
       - "4317:4317"   # OTLP gRPC
       - "4318:4318"   # OTLP HTTP (если вдруг понадобится)
       - "3200:3200"   # Tempo UI (если хочешь глянуть API)
-    command: [ "-config.file=/etc/tempo.yaml" ]
+    command:
+      - "-config.file=/etc/tempo.yaml"
     volumes:
       - ./tempo-config.yaml:/etc/tempo.yaml
       - ./tempo-data:/var/tempo
@@ -36,6 +37,25 @@ services:
       tempo-net:
           aliases:
             - tempo-query-frontend
+  loki:
+    image: grafana/loki:3.4.2
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+    command:
+      -config.file=/etc/loki/local-config.yaml
+    networks:
+      - shared-network
+
+  promtail:
+    image: grafana/promtail:3.4.0
+    volumes:
+      - ./logs:/var/log/app
+      - ./promtail-config.yaml:/etc/promtail/config.yaml
+    command: -config.file=/etc/promtail/config.yaml
+    networks:
+      - shared-network
 
   # Может не стартануть, если уже запущен в сервисе расписаний (Вахта) - это нормально
   rabbitmq:
@@ -84,3 +104,6 @@ networks:
     driver: bridge
   tempo-net:
     driver: bridge
+
+volumes:
+  loki-data:

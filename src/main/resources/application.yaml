@@ -9,12 +9,12 @@ management:
   endpoint:
     health:
       show-details: always
-
-otel:
-  metrics:
-    exporter: none
+  tracing:
+    enabled: true
 
 logging:
+  file:
+    name: ./logs/application.log
   level:
     org.hibernate: OFF
 
@@ -71,6 +71,13 @@ queueing:
     queueReplyName: schedule-reply-timeslots-queue
     routingKey: schedule-timeslots
     replyRoutingKey: schedule-reply-timeslots
+
+otlp:
+  tracing:
+    export-enabled: true
+    endpoint: http://tempo:4317
+    timeout: 5000
+    service-name: booking-service
 
 rest:
   base-url:

@@ -15,7 +15,7 @@ distributor:
   # Используйте CLI-флаги в docker-compose.yml
 
 ingester:
-  trace_idle_period: 10s
+  trace_idle_period: 1m
   lifecycler:
     ring:
       kvstore:
@@ -42,7 +42,7 @@ storage:
       path: /var/tempo/traces
     wal:
       path: /var/tempo/wal
-    blocklist_poll: 5m
+    blocklist_poll: 15m
 
 compactor:
   compaction:
