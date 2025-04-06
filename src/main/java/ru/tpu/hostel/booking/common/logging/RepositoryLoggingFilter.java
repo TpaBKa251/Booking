@@ -70,9 +70,9 @@ public class RepositoryLoggingFilter {
                 REPOSITORY_METHOD_EXECUTION_EXCEPTION,
                 repositoryName,
                 methodName,
+                throwable.getMessage(),
                 startTime,
                 executionTime,
-                throwable.getMessage(),
                 throwable
         );
     }

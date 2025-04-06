@@ -5,6 +5,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.core.Message;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.tpu.hostel.booking.common.exception.ServiceException;
 import ru.tpu.hostel.booking.common.utils.TimeUtil;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequest;
@@ -46,6 +47,7 @@ public class BookingServiceImpl implements BookingService {
 
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
+    @Transactional
     @Override
     public BookingResponse createBooking(BookingTimeSlotRequest bookingTimeSlotRequest, UUID userId) {
         Timeslot timeslot;
@@ -56,7 +58,7 @@ public class BookingServiceImpl implements BookingService {
             );
             timeslot = objectMapper.readValue(message.getBody(), Timeslot.class);
         } catch (Exception e) {
-            throw new ServiceException.ServiceUnavailable("Сервис расписаний не отвечает");
+            throw new ServiceException.ServiceUnavailable("Сервис расписаний не отвечает", e);
         }
 
         List<Booking> bookings = bookingRepository.findAllByStatusNotAndTimeSlot(CANCELLED, timeslot.id());

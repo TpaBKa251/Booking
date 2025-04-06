@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,7 +38,11 @@ public class GlobalExceptionHandler {
         if (ex.status() >= 500) {
             log.error(ex.contentUTF8(), ex);
         }
-        return getResponseEntity(HttpStatus.valueOf(ex.status()), mapHttpResponseErrorMessage(ex.contentUTF8()));
+        if (ex.status() >= 200 && ex.status() < 600) {
+            return getResponseEntity(HttpStatus.valueOf(ex.status()), mapHttpResponseErrorMessage(ex.contentUTF8()));
+        }
+
+        return getResponseEntity(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -72,7 +75,7 @@ public class GlobalExceptionHandler {
         try {
             JsonNode json  = mapper.readTree(message);
             return json.get("message").asText();
-        } catch (IOException e) {
+        } catch (Exception e) {
             return message;
         }
     }

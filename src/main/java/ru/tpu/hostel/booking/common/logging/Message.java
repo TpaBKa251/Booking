@@ -16,7 +16,7 @@ class Message {
 
     static final String REPOSITORY_METHOD_EXECUTION_EXCEPTION
             = "[REPOSITORY] Ошибка во время выполнения репозиторного метода {}.{}(). "
-            + "Время старта: {}, длительность: {} мс, ошибка: {}";
+            + "Ошибка: {}, время старта: {}, время выполнения: {} мс";
 
     static final String START_SERVICE_METHOD_EXECUTION = "[SERVICE] Выполняется сервисный метод {}.{}()";
 
@@ -31,7 +31,7 @@ class Message {
 
     static final String SERVICE_METHOD_EXECUTION_EXCEPTION
             = "[SERVICE] Ошибка во время выполнения сервисного метода {}.{}(). "
-            + "Время старта: {}, длительность: {} мс, ошибка: {}";
+            + "Ошибка: {}, время старта: {}, время выполнения: {} мс";
 
     static final String START_CONTROLLER_METHOD_EXECUTION = "[REQUEST] {} {}";
 
@@ -52,11 +52,26 @@ class Message {
             = "[RABBIT] Получен RPC ответ: messageId={}, playload={}. Время выполнения {} мс";
 
     static final String RABBIT_SENDING_METHOD_EXECUTION_EXCEPTION = "[RABBIT] Ошибка отправки сообщения: "
-            + "messageId={}, payload={}. Ошибка: {}. Время начала отправки: {}, время выполнения: {} мс";
+            + "messageId={}, payload={}. Ошибка: {}, время старта: {}, время выполнения: {} мс";
 
     static final String RABBIT_RECEIVING_RPC_EXCEPTION = "[RABBIT] Ошибка получения ответа на сообщение: "
-            + "messageId={}, payload={}. Ошибка: {}. Время начала отправки: {}, время выполнения: {} мс";
+            + "messageId={}, payload={}. Ошибка: {}, время старта: {}, время выполнения: {} мс";
 
     static final String FINISH_RABBIT_SENDING_METHOD_VIA_RPC_EXECUTION_WITH_EMPTY_RESPONSE = "[RABBIT] Пустой ответ "
-            + "на сообщение: messageId={}, payload={}. Время начала отправки: {}, время выполнения: {} мс";
+            + "на сообщение: messageId={}, payload={}, время старта: {}, время выполнения: {} мс";
+
+    static final String START_FEIGN_SENDING_REQUEST = "[FEIGN] Отправляется запрос в {}: {} {}";
+
+    static final String START_FEIGN_SENDING_REQUEST_WITH_PARAMS
+            = "[FEIGN] Отправляется запрос в {}: {} {}, параметры: {}";
+
+    static final String FEIGN_RECEIVING_RESPONSE_WITHOUT_RESULT
+            = "[FEIGN] Запрос выполнен. Время выполнения: {} мс";
+
+    static final String FEIGN_RECEIVING_RESPONSE
+            = "[FEIGN] Запрос выполнен. Статус: {}, ответ: {}, время выполнения: {} мс";
+
+    static final String FEIGN_SENDING_REQUEST_WITH_EXCEPTION
+            = "[FEIGN] Ошибка запроса: {}. Ошибка: {}, время старта: {}, время выполнения: {} мс";
+
 }

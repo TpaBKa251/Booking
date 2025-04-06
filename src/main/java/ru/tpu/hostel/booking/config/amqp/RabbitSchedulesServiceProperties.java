@@ -2,7 +2,6 @@ package ru.tpu.hostel.booking.config.amqp;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.convert.DurationUnit;
 import org.springframework.validation.annotation.Validated;
@@ -12,26 +11,32 @@ import java.time.temporal.ChronoUnit;
 
 /**
  * Свойства для подключения к брокеру сообщений RabbitMQ
+ *
+ * @param username          имя пользователя (логин)
+ * @param password          пароль
+ * @param virtualHost       виртуальный хост
+ * @param addresses         адресы
+ * @param connectionTimeout таймаут для подключения
  */
-@Data
 @Validated
 @ConfigurationProperties(prefix = "rabbitmq.schedules-service")
-public class RabbitSchedulesServiceProperties {
+public record RabbitSchedulesServiceProperties(
 
-    @NotEmpty
-    private String username;
+        @NotEmpty
+        String username,
 
-    @NotEmpty
-    private String password;
+        @NotEmpty
+        String password,
 
-    @NotEmpty
-    private String virtualHost;
+        @NotEmpty
+        String virtualHost,
 
-    @NotEmpty
-    private String addresses;
+        @NotEmpty
+        String addresses,
 
-    @NotNull
-    @DurationUnit(ChronoUnit.MILLIS)
-    private Duration connectionTimeout;
+        @NotNull
+        @DurationUnit(ChronoUnit.MILLIS)
+        Duration connectionTimeout
 
+) {
 }

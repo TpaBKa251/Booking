@@ -1,40 +1,32 @@
 package ru.tpu.hostel.booking.config.amqp;
 
 import jakarta.validation.constraints.NotEmpty;
-import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
 /**
  * Свойства очереди для отправки сообщений микросервису расписаний и получения от него ответа по RabbitMQ
+ *
+ * @param exchangeName    Имя обменника
+ * @param queueReplyName  Имя очереди для ответа
+ * @param routingKey      Имя ключа маршрутизации для отправки
+ * @param replyRoutingKey Имя ключа маршрутизации для получения ответа
  */
-@Data
 @Validated
 @ConfigurationProperties(prefix = "queueing.schedules-service")
-public class RabbitScheduleServiceQueueingProperties {
+public record RabbitScheduleServiceQueueingProperties(
 
-    /**
-     * Имя обменника
-     */
-    @NotEmpty
-    private String exchangeName;
+        @NotEmpty
+        String exchangeName,
 
-    /**
-     * Имя очереди для ответа
-     */
-    @NotEmpty
-    private String queueReplyName;
+        @NotEmpty
+        String queueReplyName,
 
-    /**
-     * Имя ключа маршрутизации для отправки
-     */
-    @NotEmpty
-    private String routingKey;
+        @NotEmpty
+        String routingKey,
 
-    /**
-     * Имя ключа маршрутизации для получения ответа
-     */
-    @NotEmpty
-    private String replyRoutingKey;
+        @NotEmpty
+        String replyRoutingKey
 
+) {
 }

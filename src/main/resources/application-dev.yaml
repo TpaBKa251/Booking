@@ -11,7 +11,7 @@ rabbitmq:
 
 otlp:
   tracing:
-    export-enabled: true
+    export-enabled: false
     endpoint: http://localhost:4317
 
 rest:

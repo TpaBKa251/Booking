@@ -135,14 +135,13 @@ public class ServiceLoggingFilter {
             Throwable throwable
     ) {
         long finishTime = System.currentTimeMillis() - startTimeMillis;
-
         log.error(
                 SERVICE_METHOD_EXECUTION_EXCEPTION,
                 serviceName,
                 methodName,
+                throwable.getMessage(),
                 getLocalDateTimeStingFromMillis(startTimeMillis),
-                finishTime,
-                throwable.getMessage()
+                finishTime
         );
     }
 

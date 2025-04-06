@@ -51,8 +51,8 @@ public class RabbitScheduleServiceMessageSender implements AmqpMessageSender {
             RabbitScheduleServiceQueueingProperties properties
     ) {
         this.rabbitTemplate = rabbitTemplate;
-        this.rabbitTemplate.setExchange(properties.getExchangeName());
-        this.rabbitTemplate.setRoutingKey(properties.getRoutingKey());
+        this.rabbitTemplate.setExchange(properties.exchangeName());
+        this.rabbitTemplate.setRoutingKey(properties.routingKey());
         this.queueProperties = properties;
     }
 
@@ -101,7 +101,7 @@ public class RabbitScheduleServiceMessageSender implements AmqpMessageSender {
                 .setTimestamp(new Date(nowMillis))
                 .setDeliveryMode(MessageDeliveryMode.PERSISTENT)
                 .setContentType(MessageProperties.CONTENT_TYPE_JSON)
-                .setReplyTo(queueProperties.getQueueReplyName())
+                .setReplyTo(queueProperties.queueReplyName())
                 .build();
     }
 }

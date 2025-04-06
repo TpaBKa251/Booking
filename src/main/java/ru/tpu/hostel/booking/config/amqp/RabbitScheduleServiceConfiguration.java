@@ -57,11 +57,11 @@ public class RabbitScheduleServiceConfiguration {
     @Bean(SCHEDULES_SERVICE_CONNECTION_FACTORY)
     public ConnectionFactory schedulesServiceConnectionFactory(RabbitSchedulesServiceProperties properties) {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
-        connectionFactory.setUsername(properties.getUsername());
-        connectionFactory.setPassword(properties.getPassword());
-        connectionFactory.setVirtualHost(properties.getVirtualHost());
-        connectionFactory.setAddresses(properties.getAddresses());
-        connectionFactory.setConnectionTimeout((int) properties.getConnectionTimeout().toMillis());
+        connectionFactory.setUsername(properties.username());
+        connectionFactory.setPassword(properties.password());
+        connectionFactory.setVirtualHost(properties.virtualHost());
+        connectionFactory.setAddresses(properties.addresses());
+        connectionFactory.setConnectionTimeout((int) properties.connectionTimeout().toMillis());
         return connectionFactory;
     }
 
@@ -87,14 +87,14 @@ public class RabbitScheduleServiceConfiguration {
     }
 
     private void initQueue(RabbitAdmin rabbitAdmin, RabbitScheduleServiceQueueingProperties queueProperties) {
-        DirectExchange exchange = new DirectExchange(queueProperties.getExchangeName());
+        DirectExchange exchange = new DirectExchange(queueProperties.exchangeName());
 
-        Queue queue = QueueBuilder.durable(queueProperties.getQueueReplyName())
+        Queue queue = QueueBuilder.durable(queueProperties.queueReplyName())
                 .quorum()
                 .build();
 
         rabbitAdmin.declareQueue(queue);
-        declareAndBindQueue(rabbitAdmin, queueProperties.getReplyRoutingKey(), exchange, queue);
+        declareAndBindQueue(rabbitAdmin, queueProperties.replyRoutingKey(), exchange, queue);
     }
 
     private void declareAndBindQueue(

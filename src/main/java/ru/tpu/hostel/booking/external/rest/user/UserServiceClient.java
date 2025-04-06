@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Component
-@FeignClient(name = "user-userservice", url = "${rest.base-url.user-service}")
+@FeignClient(name = "user-service", url = "${rest.base-url.user-service}")
 public interface UserServiceClient {
 
     @GetMapping("/users/get/by/id/{id}")

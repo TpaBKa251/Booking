@@ -9,19 +9,28 @@ clients:
   - url: http://loki:3100/loki/api/v1/push
 
 scrape_configs:
-  - job_name: booking-service
+  - job_name: logging
     static_configs:
       - targets: [localhost]
         labels:
-          job: booking-service
           __path__: /var/log/app/*.log
     pipeline_stages:
-      - json:
-          expressions:
-            level: level
-            trace_id: traceId
-            method: method
+      # Парсинг строки лога через regex
+      - regex:
+          expression: '^(?P<timestamp>\S+)\s+(?P<level>\S+)\s+(?P<pid>\d+)\s+---\s+\[(?P<service_name>[^\]]+)\]\s+\[(?P<thread>[^\]]+)\]\s+\[(?P<trace_id>[^\s-]*)(?:-(?P<span_id>[^\s]+))?\s*\].*?:\s+(?:\[(?P<log_type>SERVICE|REPOSITORY|RABBIT|FEIGN|REQUEST|RESPONSE)\]\s+)?(?P<message>.*)$'
       - labels:
-          level:
-          trace_id:
-          method:
+          timestamp : ""
+          level: ""
+          service_name: ""
+          trace_id: ""       # Идентификатор трейса
+          span_id: ""
+          log_type: ""       # SERVICE/REPOSITORY
+      # (Опционально) Извлечение метода из сообщения
+      - regex:
+          source: message
+          expression: 'метод\s+(?P<method>[^\s(]+)'
+      - labels:
+          method: ""         # Метод (например, BookingRepository.findAll)
+    relabel_configs:
+      - action: labeldrop
+        regex: "job|filename|thread|application"  # чистим лишнее
