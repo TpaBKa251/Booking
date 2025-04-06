@@ -1,0 +1,36 @@
+# promtail-config.yaml
+server:
+  http_listen_port: 9080
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: logging
+    static_configs:
+      - targets: [localhost]
+        labels:
+          __path__: /var/log/app/*.log
+    pipeline_stages:
+      # Парсинг строки лога через regex
+      - regex:
+          expression: '^(?P<timestamp>\S+)\s+(?P<level>\S+)\s+(?P<pid>\d+)\s+---\s+\[(?P<service_name>[^\]]+)\]\s+\[(?P<thread>[^\]]+)\]\s+\[(?P<trace_id>[^\s-]*)(?:-(?P<span_id>[^\s]+))?\s*\].*?:\s+(?:\[(?P<log_type>SERVICE|REPOSITORY|RABBIT|FEIGN|REQUEST|RESPONSE)\]\s+)?(?P<message>.*)$'
+      - labels:
+          timestamp : ""
+          level: ""
+          service_name: ""
+          trace_id: ""       # Идентификатор трейса
+          span_id: ""
+          log_type: ""       # SERVICE/REPOSITORY
+      # (Опционально) Извлечение метода из сообщения
+      - regex:
+          source: message
+          expression: 'метод\s+(?P<method>[^\s(]+)'
+      - labels:
+          method: ""         # Метод (например, BookingRepository.findAll)
+    relabel_configs:
+      - action: labeldrop
+        regex: "job|filename|thread|application"  # чистим лишнее

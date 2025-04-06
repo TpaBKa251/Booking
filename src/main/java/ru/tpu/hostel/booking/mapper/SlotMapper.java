@@ -7,6 +7,7 @@ import ru.tpu.hostel.booking.entity.TimeSlot;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+@Deprecated(forRemoval = true)
 @Component
 public class SlotMapper {
 

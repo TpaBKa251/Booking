@@ -10,15 +10,17 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
-import ru.tpu.hostel.booking.enums.BookingType;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Deprecated(forRemoval = true)
 @Entity
 @Table(name = "time_slots", schema = "booking")
 @Getter
 @Setter
+@ToString
 public class TimeSlot {
 
     @Id

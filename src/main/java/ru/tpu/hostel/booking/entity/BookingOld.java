@@ -14,14 +14,13 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
-import ru.tpu.hostel.booking.enums.BookingStatus;
-import ru.tpu.hostel.booking.enums.BookingType;
-import ru.tpu.hostel.booking.service.impl.states.BookedStateOld;
-import ru.tpu.hostel.booking.service.impl.states.CancelStateOld;
-import ru.tpu.hostel.booking.service.impl.states.CompletedStateOld;
-import ru.tpu.hostel.booking.service.impl.states.InProgressStateOld;
-import ru.tpu.hostel.booking.service.impl.states.NotBookedStateOld;
-import ru.tpu.hostel.booking.service.state.BookingState;
+import lombok.ToString;
+import ru.tpu.hostel.booking.service.old.state.BookedStateOld;
+import ru.tpu.hostel.booking.service.old.state.BookingStateOld;
+import ru.tpu.hostel.booking.service.old.state.CancelStateOld;
+import ru.tpu.hostel.booking.service.old.state.CompletedStateOld;
+import ru.tpu.hostel.booking.service.old.state.InProgressStateOld;
+import ru.tpu.hostel.booking.service.old.state.NotBookedStateOld;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -38,6 +37,7 @@ import java.util.UUID;
 @Entity
 @Getter
 @Setter
+@ToString(exclude = {"timeSlot", "bookingState"})
 public class BookingOld {
 
     @Id
@@ -55,7 +55,7 @@ public class BookingOld {
     private BookingStatus status;
 
     @Transient
-    private BookingState bookingState;
+    private BookingStateOld bookingState;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
@@ -76,7 +76,7 @@ public class BookingOld {
             case BOOKED -> this.bookingState = new BookedStateOld();
             case IN_PROGRESS -> this.bookingState = new InProgressStateOld();
             case COMPLETED -> this.bookingState = new CompletedStateOld();
-            default -> throw new IllegalStateException("Unknownn booking status: " + this.status);
+            default -> throw new IllegalArgumentException("Неизвестное состояние: " + this.status);
         }
     }
 }

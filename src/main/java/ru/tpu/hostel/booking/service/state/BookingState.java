@@ -1,11 +1,27 @@
 package ru.tpu.hostel.booking.service.state;
 
-import ru.tpu.hostel.booking.entity.BookingOld;
-import ru.tpu.hostel.booking.repository.BookingRepositoryOld;
+import ru.tpu.hostel.booking.entity.Booking;
+import ru.tpu.hostel.booking.repository.BookingRepository;
 
+/**
+ * Интерфейс состояния брони
+ */
 public interface BookingState {
 
-    void updateStatus(BookingOld booking, BookingRepositoryOld bookingRepository);
+    /**
+     * Обновляет состояние брони
+     *
+     * @param booking           бронь
+     * @param bookingRepository репозиторий броней
+     */
+    void updateStatus(Booking booking, BookingRepository bookingRepository);
 
-    void cancelBooking(BookingOld booking, BookingRepositoryOld bookingRepository);
+    /**
+     * Закрывает бронь
+     *
+     * @param booking           бронь
+     * @param bookingRepository репозиторий броней
+     */
+    void cancelBooking(Booking booking, BookingRepository bookingRepository);
+
 }

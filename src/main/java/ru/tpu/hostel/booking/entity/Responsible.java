@@ -12,7 +12,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.springframework.format.annotation.DateTimeFormat;
-import ru.tpu.hostel.booking.enums.BookingType;
 
 import java.time.LocalDate;
 import java.util.UUID;

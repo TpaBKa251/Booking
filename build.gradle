@@ -24,24 +24,32 @@ configurations {
 
 repositories {
     mavenCentral()
+    google()
+    gradlePluginPortal()
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:2023.0.3"
+    }
 }
 
 sonarqube {
     properties {
         property "sonar.projectKey", "TpaBKa251_Booking"
-        property "sonar.organization", "hostel-service" // Замените на имя вашей организации
+        property "sonar.organization", "hostel-service"
         property "sonar.host.url", "https://sonarcloud.io"
-        property "sonar.login", System.getenv("SONAR_TOKEN") // Используется токен из секретов GitHub
+        property "sonar.login", System.getenv("SONAR_TOKEN")
         property "sonar.coverage.jacoco.xmlReportPaths", layout.buildDirectory.file("reports/jacoco/test/jacocoTestReport.xml")
-        property "sonar.coverage.exclusions", "**/*Generated*.java,**/model/*.java" // Исключения из анализа
-        property "sonar.java.binaries", "build/classes/java/main" // Путь к скомпилированным классам
+        property "sonar.coverage.exclusions", "**/*Generated*.java,**/model/*.java"
+        property "sonar.java.binaries", "build/classes/java/main"
         property "sonar.exclusions", "**/client/**, **/controller/**, **/dto/**, **/entity/**, **/handler/**, **/mapper/**, **/repository/**, **/utils/**, **/service/**"
     }
 }
 
 dependencies {
-    implementation platform("org.springframework.cloud:spring-cloud-dependencies:2023.0.2")
-    //implementation 'ch.qos.logback:logback-core:1.5.13'
+    implementation platform("org.springframework.cloud:spring-cloud-dependencies:2023.0.3")
+    implementation 'org.springframework.security:spring-security-crypto:6.3.5'
     implementation 'commons-io:commons-io:2.14.0'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -51,23 +59,34 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     implementation 'org.springframework.boot:spring-boot-starter-amqp'
-    implementation 'org.springframework.boot:spring-boot-starter-actuator' // Для актюаторов
-
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.mapstruct:mapstruct:1.5.3.Final'
     implementation 'org.apache.commons:commons-compress:1.26.0'
-    implementation 'org.apache.poi:poi:5.2.3' // Для работы с .xls файлами
-    implementation 'org.apache.poi:poi-ooxml:5.2.3' // Для работы с .xlsx файлами
-    implementation 'org.apache.commons:commons-collections4:4.4' // Необходимая зависимость
-    implementation 'org.apache.xmlbeans:xmlbeans:5.1.1' // Для работы с .xlsx (XML-структуры)
-
+    implementation 'org.apache.poi:poi:5.2.3'
+    implementation 'org.apache.poi:poi-ooxml:5.2.3'
+    implementation 'org.apache.commons:commons-collections4:4.4'
+    implementation 'org.apache.xmlbeans:xmlbeans:5.1.1'
     implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
-
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
     implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel:1.4.4'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.37.0'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'com.github.loki4j:loki-logback-appender:1.6.0'
+    implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
+
+//    implementation 'io.opentelemetry:opentelemetry-api:1.37.0'
+//    implementation 'io.opentelemetry:opentelemetry-sdk:1.37.0'
+//    implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.37.0'
+//    implementation 'io.opentelemetry:opentelemetry-extension-trace-propagators:1.37.0'
+//    implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter:2.3.0-alpha'
 
     compileOnly 'org.projectlombok:lombok'
 
     annotationProcessor 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.3.Final'
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -83,20 +102,20 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
-    finalizedBy jacocoTestReport // Генерируем отчет после тестов
+    finalizedBy jacocoTestReport
 }
 
 jacocoTestReport {
     dependsOn test
     reports {
-        xml.required.set(true) // Включаем XML для SonarCloud
+        xml.required.set(true)
         html.required.set(false)
         csv.required.set(false)
     }
 }
 
 jacoco {
-    toolVersion = "0.8.11" // Последняя версия
+    toolVersion = "0.8.11"
 }
 
 jar {

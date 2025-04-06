@@ -3,10 +3,11 @@ package ru.tpu.hostel.booking.dto.request;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.format.annotation.DateTimeFormat;
-import ru.tpu.hostel.booking.enums.BookingType;
+import ru.tpu.hostel.booking.entity.BookingType;
 
 import java.time.LocalDateTime;
 
+@Deprecated(forRemoval = true)
 public record BookingTimeLineRequest(
 
         @NotNull(message = "Тип ресурса для брони не может быть пустым")

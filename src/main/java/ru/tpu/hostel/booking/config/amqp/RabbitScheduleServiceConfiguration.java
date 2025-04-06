@@ -3,6 +3,7 @@ package ru.tpu.hostel.booking.config.amqp;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.core.Binding;
@@ -21,13 +22,14 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import ru.tpu.hostel.booking.rabbit.amqp.AmqpMessageSender;
-import ru.tpu.hostel.booking.rabbit.amqp.schedule.RabbitScheduleServiceMessageSender;
+import ru.tpu.hostel.booking.external.amqp.AmqpMessageSender;
+import ru.tpu.hostel.booking.external.amqp.schedule.RabbitScheduleServiceMessageSender;
 
 /**
  * Конфигурация брокера сообщений RabbitMQ для общения с микросервисом расписаний
  */
 @Configuration
+@Slf4j
 @EnableConfigurationProperties({RabbitSchedulesServiceProperties.class, RabbitScheduleServiceQueueingProperties.class})
 public class RabbitScheduleServiceConfiguration {
 
@@ -55,11 +57,11 @@ public class RabbitScheduleServiceConfiguration {
     @Bean(SCHEDULES_SERVICE_CONNECTION_FACTORY)
     public ConnectionFactory schedulesServiceConnectionFactory(RabbitSchedulesServiceProperties properties) {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
-        connectionFactory.setUsername(properties.getUsername());
-        connectionFactory.setPassword(properties.getPassword());
-        connectionFactory.setVirtualHost(properties.getVirtualHost());
-        connectionFactory.setAddresses(properties.getAddresses());
-        connectionFactory.setConnectionTimeout((int) properties.getConnectionTimeout().toMillis());
+        connectionFactory.setUsername(properties.username());
+        connectionFactory.setPassword(properties.password());
+        connectionFactory.setVirtualHost(properties.virtualHost());
+        connectionFactory.setAddresses(properties.addresses());
+        connectionFactory.setConnectionTimeout((int) properties.connectionTimeout().toMillis());
         return connectionFactory;
     }
 
@@ -70,6 +72,7 @@ public class RabbitScheduleServiceConfiguration {
     ) {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setMessageConverter(messageConverter);
+        rabbitTemplate.setObservationEnabled(true);
         return rabbitTemplate;
     }
 
@@ -84,14 +87,14 @@ public class RabbitScheduleServiceConfiguration {
     }
 
     private void initQueue(RabbitAdmin rabbitAdmin, RabbitScheduleServiceQueueingProperties queueProperties) {
-        DirectExchange exchange = new DirectExchange(queueProperties.getExchangeName());
+        DirectExchange exchange = new DirectExchange(queueProperties.exchangeName());
 
-        Queue queue = QueueBuilder.durable(queueProperties.getQueueReplyName())
+        Queue queue = QueueBuilder.durable(queueProperties.queueReplyName())
                 .quorum()
                 .build();
 
         rabbitAdmin.declareQueue(queue);
-        declareAndBindQueue(rabbitAdmin, queueProperties.getReplyRoutingKey(), exchange, queue);
+        declareAndBindQueue(rabbitAdmin, queueProperties.replyRoutingKey(), exchange, queue);
     }
 
     private void declareAndBindQueue(
@@ -121,10 +124,10 @@ public class RabbitScheduleServiceConfiguration {
 
     @Bean(SCHEDULES_SERVICE_AMQP_MESSAGE_SENDER)
     public AmqpMessageSender schedulesServiceAmqpMessageSender(
-            @Qualifier(SCHEDULES_SERVICE_CONNECTION_FACTORY) ConnectionFactory connectionFactory,
+            @Qualifier(SCHEDULES_SERVICE_RABBIT_TEMPLATE) RabbitTemplate rabbitTemplate,
             RabbitScheduleServiceQueueingProperties queueProperties
     ) {
-        return new RabbitScheduleServiceMessageSender(connectionFactory, queueProperties);
+        return new RabbitScheduleServiceMessageSender(rabbitTemplate, queueProperties);
     }
 
 }
