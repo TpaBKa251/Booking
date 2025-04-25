@@ -3,6 +3,7 @@ package ru.tpu.hostel.booking.config.rest;
 import feign.RequestInterceptor;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanContext;
+import jakarta.servlet.Filter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,6 +26,21 @@ public class HttpRestInterceptor {
                         spanContext.getTraceId(),
                         spanContext.getSpanId());
                 requestTemplate.header("traceparent", traceparent);
+            }
+        };
+    }
+
+    @Bean
+    public Filter tracingHttpRequestFilter() {
+        return (servletRequest, servletResponse, filterChain) -> {
+            Span span = Span.current();
+            SpanContext spanContext = span.getSpanContext();
+
+            String traceId;
+            String spanId;
+            if (spanContext.isValid()) {
+                traceId = spanContext.getTraceId();
+                spanId = spanContext.getSpanId();
             }
         };
     }

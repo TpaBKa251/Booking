@@ -75,12 +75,8 @@ dependencies {
     implementation 'io.micrometer:micrometer-registry-prometheus'
     implementation 'com.github.loki4j:loki-logback-appender:1.6.0'
     implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
-
-//    implementation 'io.opentelemetry:opentelemetry-api:1.37.0'
-//    implementation 'io.opentelemetry:opentelemetry-sdk:1.37.0'
-//    implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.37.0'
-//    implementation 'io.opentelemetry:opentelemetry-extension-trace-propagators:1.37.0'
-//    implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter:2.3.0-alpha'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.3'
+    implementation 'com.squareup:javapoet:1.13.0'
 
     compileOnly 'org.projectlombok:lombok'
 

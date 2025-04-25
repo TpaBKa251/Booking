@@ -6,6 +6,7 @@ import ru.tpu.hostel.booking.dto.response.BookingResponseWithUser;
 import ru.tpu.hostel.booking.dto.response.TimeSlotResponse;
 import ru.tpu.hostel.booking.entity.BookingStatus;
 import ru.tpu.hostel.booking.entity.BookingType;
+import ru.tpu.hostel.booking.service.access.Roles;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -42,7 +43,7 @@ public interface BookingService {
      * @param userId    ID юзера
      * @return ДТО-ответ закрытой брони
      */
-    BookingResponse cancelBooking(UUID bookingId, UUID userId);
+    BookingResponse cancelBooking(UUID bookingId, UUID userId, Roles[] userRoles);
 
     /**
      * Возвращает список из ДТО-ответов броней по статусу для юзера

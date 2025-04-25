@@ -22,13 +22,16 @@ public class ServiceException extends RuntimeException {
     }
 
     public ServiceException(HttpStatus status) {
-        super(status.getReasonPhrase());
-        this.status = status;
+        this(status.getReasonPhrase(), status);
     }
 
     public ServiceException(String message, HttpStatus status, Throwable cause) {
         super(message, cause);
         this.status = status;
+    }
+
+    public ServiceException(String message, ServiceException cause) {
+        this(message, cause.status, cause);
     }
 
     public static class BadRequest extends ServiceException {
@@ -103,6 +106,20 @@ public class ServiceException extends RuntimeException {
 
         public ServiceUnavailable() {
             this("Service Unavailable");
+        }
+    }
+
+    public static class InternalServerError extends ServiceException {
+        public InternalServerError(String message) {
+            super(message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        public InternalServerError(String message, Throwable cause) {
+            super(message, HttpStatus.INTERNAL_SERVER_ERROR, cause);
+        }
+
+        public InternalServerError() {
+            this("Internal Server Error");
         }
     }
 

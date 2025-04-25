@@ -2,9 +2,9 @@ package ru.tpu.hostel.booking.common.logging;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -17,17 +17,16 @@ import static ru.tpu.hostel.booking.common.logging.Message.START_CONTROLLER_METH
 @Aspect
 @Component
 @Slf4j
+@Order(0)
 public class RequestLoggingFilter {
 
-    @Around("execution(public * ru.tpu.hostel.booking.controller.*Controller*.*(..))")
-    public Object logControllerMethod(ProceedingJoinPoint joinPoint) throws Throwable {
+    @Before("execution(public * ru.tpu.hostel.booking.controller.*Controller*.*(..))")
+    public void logControllerMethod() {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         HttpServletRequest request = attributes != null ? attributes.getRequest() : null;
         if (request != null) {
             logRequest(request);
         }
-
-        return joinPoint.proceed();
     }
 
     private void logRequest(HttpServletRequest request) {

@@ -30,6 +30,9 @@ public class GlobalExceptionHandler {
         if (ex.getStatus().value() >= 500 && ex.getStatus().value() < 600) {
             log.error(ex.getMessage(), ex);
         }
+        if (ex.getCause() != null) {
+            return getResponseEntity(ex.getStatus(), ex.getCause().getMessage());
+        }
         return getResponseEntity(ex.getStatus(), ex.getMessage());
     }
 

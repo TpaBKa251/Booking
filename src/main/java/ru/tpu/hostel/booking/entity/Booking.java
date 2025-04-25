@@ -14,6 +14,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.proxy.HibernateProxy;
+import ru.tpu.hostel.booking.service.access.CheckOwner;
 import ru.tpu.hostel.booking.service.state.BookingState;
 import ru.tpu.hostel.booking.service.state.impl.BookedState;
 import ru.tpu.hostel.booking.service.state.impl.CancelState;
@@ -33,6 +34,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @ToString(exclude = "bookingState")
+@CheckOwner(method = "getUser")
 public class Booking {
 
     @Id

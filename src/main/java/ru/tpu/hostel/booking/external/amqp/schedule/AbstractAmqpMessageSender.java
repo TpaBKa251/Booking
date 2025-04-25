@@ -1,12 +1,12 @@
 package ru.tpu.hostel.booking.external.amqp.schedule;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.core.MessageProperties;
@@ -17,7 +17,7 @@ import ru.tpu.hostel.booking.common.exception.ServiceException;
 import ru.tpu.hostel.booking.common.utils.TimeUtil;
 import ru.tpu.hostel.booking.config.amqp.QueueingProperties;
 import ru.tpu.hostel.booking.external.amqp.MessageSender;
-import ru.tpu.hostel.booking.external.amqp.schedule.dto.ScheduleResponse;
+import ru.tpu.hostel.booking.external.amqp.MessageType;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -26,10 +26,13 @@ import java.util.Set;
 import java.util.UUID;
 
 @RequiredArgsConstructor
-@Slf4j
-public class RabbitScheduleServiceMessageSender implements MessageSender<ScheduleMessageType, ScheduleResponse> {
+public abstract class AbstractAmqpMessageSender<T extends MessageType, R> implements MessageSender<T, R> {
 
-    private static final int HIGH_PRIORITY = 10;
+    protected static final int PRIORITY = 10;
+
+    protected final RabbitTemplate rabbitTemplate;
+
+    protected final Set<QueueingProperties> queueingProperties;
 
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .registerModule(new JavaTimeModule())
@@ -39,12 +42,8 @@ public class RabbitScheduleServiceMessageSender implements MessageSender<Schedul
             .setTimeZone(TimeUtil.getTimeZone())
             .setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
-    private final RabbitTemplate rabbitTemplate;
-
-    private final Set<QueueingProperties> queueingProperties;
-
     @Override
-    public void send(ScheduleMessageType messageType, String messageId, Object messagePayload) throws IOException {
+    public void send(T messageType, String messageId, Object messagePayload) throws IOException {
         MessageProperties messageProperties = getMessageProperties(messageId);
         Message message = new Message(MAPPER.writeValueAsBytes(messagePayload), messageProperties);
         configureRabbitTemplate(messageType);
@@ -52,37 +51,33 @@ public class RabbitScheduleServiceMessageSender implements MessageSender<Schedul
     }
 
     @Override
-    public ScheduleResponse sendAndReceive(
-            ScheduleMessageType messageType,
-            String messageId,
-            Object messagePayload
-    ) throws IOException {
+    public R sendAndReceive(T messageType, String messageId, Object messagePayload) throws IOException {
         MessageProperties messageProperties = getMessageProperties(messageId);
         Message message = new Message(MAPPER.writeValueAsBytes(messagePayload), messageProperties);
         configureRabbitTemplate(messageType);
         Message response = rabbitTemplate.sendAndReceive(message);
 
         if (response != null) {
-            return MAPPER.readValue(response.getBody(), ScheduleResponse.class);
+            return MAPPER.readValue(response.getBody(), new TypeReference<>() {});
         }
-        throw new IOException("Ответ от Расписаний пустой");
+        throw new IOException("Ответ от пустой");
     }
 
-    private MessageProperties getMessageProperties(String messageId) {
+    protected MessageProperties getMessageProperties(String messageId) {
         ZonedDateTime now = TimeUtil.getZonedDateTime();
         long nowMillis = now.toInstant().toEpochMilli();
 
         return MessagePropertiesBuilder.newInstance()
                 .setMessageId(messageId)
                 .setCorrelationId(UUID.randomUUID().toString())
-                .setPriority(HIGH_PRIORITY)
+                .setPriority(PRIORITY)
                 .setTimestamp(new Date(nowMillis))
                 .setDeliveryMode(MessageDeliveryMode.PERSISTENT)
                 .setContentType(MessageProperties.CONTENT_TYPE_JSON)
                 .build();
     }
 
-    private void configureRabbitTemplate(ScheduleMessageType messageType) {
+    protected void configureRabbitTemplate(MessageType messageType) {
         QueueingProperties properties = queueingProperties.stream()
                 .filter(queueingProperties1 -> queueingProperties1.isApplicable(messageType))
                 .findFirst()
@@ -95,4 +90,6 @@ public class RabbitScheduleServiceMessageSender implements MessageSender<Schedul
         rabbitTemplate.setExchange(properties.exchangeName());
         rabbitTemplate.setRoutingKey(properties.routingKey());
     }
+
+
 }

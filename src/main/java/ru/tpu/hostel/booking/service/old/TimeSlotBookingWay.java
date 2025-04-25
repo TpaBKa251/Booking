@@ -44,11 +44,11 @@ public class TimeSlotBookingWay {
 
     private final ResponsibleRepository responsibleRepository;
 
-    private final AmqpMessageSender schedulesServiceAmqpMessageSender;
+    private final AmqpMessageSender schedulesServiceBookAmqpMessageSender;
 
     public BookingResponse createBooking(BookingTimeSlotRequest bookingTimeSlotRequestDto, UUID userId) {
         try {
-            schedulesServiceAmqpMessageSender.sendAndReceive(
+            schedulesServiceBookAmqpMessageSender.sendAndReceive(
                     bookingTimeSlotRequestDto.slotId().toString(),
                     bookingTimeSlotRequestDto.slotId()
             );

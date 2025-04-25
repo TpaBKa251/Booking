@@ -67,10 +67,12 @@ rabbitmq:
 
 queueing:
   schedules-service:
-    exchangeName: schedule-timeslots-exchange
-    queueReplyName: schedule-reply-timeslots-queue
-    routingKey: schedule-timeslots
-    replyRoutingKey: schedule-reply-timeslots
+    book:
+      exchangeName: schedule-timeslots-exchange
+      routingKey: schedule-timeslots
+    cancel:
+      exchangeName: schedule-timeslots-exchangea
+      routingKey: schedule-timeslots-cancel
 
 otlp:
   tracing:

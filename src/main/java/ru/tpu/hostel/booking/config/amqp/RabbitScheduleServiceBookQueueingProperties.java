@@ -3,6 +3,8 @@ package ru.tpu.hostel.booking.config.amqp;
 import jakarta.validation.constraints.NotEmpty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
+import ru.tpu.hostel.booking.external.amqp.MessageType;
+import ru.tpu.hostel.booking.external.amqp.schedule.ScheduleMessageType;
 
 /**
  * Свойства очереди для отправки сообщений микросервису расписаний и получения от него ответа по RabbitMQ
@@ -13,20 +15,19 @@ import org.springframework.validation.annotation.Validated;
  * @param replyRoutingKey Имя ключа маршрутизации для получения ответа
  */
 @Validated
-@ConfigurationProperties(prefix = "queueing.schedules-service")
-public record RabbitScheduleServiceQueueingProperties(
+@ConfigurationProperties(prefix = "queueing.schedules-service.book")
+public record RabbitScheduleServiceBookQueueingProperties(
 
         @NotEmpty
         String exchangeName,
 
         @NotEmpty
-        String queueReplyName,
+        String routingKey
 
-        @NotEmpty
-        String routingKey,
+) implements QueueingProperties {
 
-        @NotEmpty
-        String replyRoutingKey
-
-) {
+        @Override
+        public boolean isApplicable(MessageType type) {
+                return type == ScheduleMessageType.BOOK;
+        }
 }

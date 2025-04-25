@@ -6,11 +6,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.AmqpAdmin;
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -23,14 +18,24 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import ru.tpu.hostel.booking.external.amqp.AmqpMessageSender;
+import ru.tpu.hostel.booking.external.amqp.MessageSender;
+import ru.tpu.hostel.booking.external.amqp.schedule.ScheduleMessageType;
+import ru.tpu.hostel.booking.external.amqp.schedule.RabbitScheduleServiceBookMessageSender;
 import ru.tpu.hostel.booking.external.amqp.schedule.RabbitScheduleServiceMessageSender;
+import ru.tpu.hostel.booking.external.amqp.schedule.dto.ScheduleResponse;
+
+import java.util.Set;
 
 /**
  * Конфигурация брокера сообщений RabbitMQ для общения с микросервисом расписаний
  */
 @Configuration
 @Slf4j
-@EnableConfigurationProperties({RabbitSchedulesServiceProperties.class, RabbitScheduleServiceQueueingProperties.class})
+@EnableConfigurationProperties({
+        RabbitSchedulesServiceProperties.class,
+        RabbitScheduleServiceBookQueueingProperties.class,
+        RabbitScheduleServiceCancelQueueingProperties.class,
+})
 public class RabbitScheduleServiceConfiguration {
 
     public static final String SCHEDULES_SERVICE_LISTENER = "schedulesServiceListener";
@@ -43,7 +48,7 @@ public class RabbitScheduleServiceConfiguration {
 
     private static final String SCHEDULES_SERVICE_MESSAGE_CONVERTER = "schedulesServiceMessageConverter";
 
-    private static final String SCHEDULES_SERVICE_AMQP_MESSAGE_SENDER = "schedulesServiceAmqpMessageSender";
+    private static final String SCHEDULES_SERVICE_BOOK_AMQP_MESSAGE_SENDER = "schedulesServiceBookAmqpMessageSender";
 
     @Bean(SCHEDULES_SERVICE_MESSAGE_CONVERTER)
     public MessageConverter schedulesServiceMessageConverter() {
@@ -78,36 +83,9 @@ public class RabbitScheduleServiceConfiguration {
 
     @Bean(SCHEDULES_SERVICE_AMQP_ADMIN)
     public AmqpAdmin schedulesServiceAmqpAdmin(
-            @Qualifier(SCHEDULES_SERVICE_RABBIT_TEMPLATE) RabbitTemplate rabbitTemplate,
-            RabbitScheduleServiceQueueingProperties queueProperties
+            @Qualifier(SCHEDULES_SERVICE_RABBIT_TEMPLATE) RabbitTemplate rabbitTemplate
     ) {
-        RabbitAdmin rabbitAdmin = new RabbitAdmin(rabbitTemplate);
-        initQueue(rabbitAdmin, queueProperties);
-        return rabbitAdmin;
-    }
-
-    private void initQueue(RabbitAdmin rabbitAdmin, RabbitScheduleServiceQueueingProperties queueProperties) {
-        DirectExchange exchange = new DirectExchange(queueProperties.exchangeName());
-
-        Queue queue = QueueBuilder.durable(queueProperties.queueReplyName())
-                .quorum()
-                .build();
-
-        rabbitAdmin.declareQueue(queue);
-        declareAndBindQueue(rabbitAdmin, queueProperties.replyRoutingKey(), exchange, queue);
-    }
-
-    private void declareAndBindQueue(
-            RabbitAdmin rabbitAdmin,
-            String replyRoutingKey,
-            DirectExchange exchange,
-            Queue queue
-    ) {
-        Binding binding = BindingBuilder.bind(queue).to(exchange).with(replyRoutingKey);
-
-        rabbitAdmin.declareQueue(queue);
-        rabbitAdmin.declareExchange(exchange);
-        rabbitAdmin.declareBinding(binding);
+        return new RabbitAdmin(rabbitTemplate);
     }
 
     @Bean(SCHEDULES_SERVICE_LISTENER)
@@ -122,12 +100,20 @@ public class RabbitScheduleServiceConfiguration {
         return factory;
     }
 
-    @Bean(SCHEDULES_SERVICE_AMQP_MESSAGE_SENDER)
-    public AmqpMessageSender schedulesServiceAmqpMessageSender(
-            @Qualifier(SCHEDULES_SERVICE_RABBIT_TEMPLATE) RabbitTemplate rabbitTemplate,
-            RabbitScheduleServiceQueueingProperties queueProperties
+    @Bean(SCHEDULES_SERVICE_BOOK_AMQP_MESSAGE_SENDER)
+    public AmqpMessageSender schedulesServiceBookAmqpMessageSender(
+            @Qualifier(SCHEDULES_SERVICE_CONNECTION_FACTORY) ConnectionFactory connectionFactory,
+            RabbitScheduleServiceBookQueueingProperties queueProperties
     ) {
-        return new RabbitScheduleServiceMessageSender(rabbitTemplate, queueProperties);
+        return new RabbitScheduleServiceBookMessageSender(connectionFactory, queueProperties);
+    }
+
+    @Bean
+    public MessageSender<ScheduleMessageType, ScheduleResponse> schedulesServiceMessageSender(
+            @Qualifier(SCHEDULES_SERVICE_RABBIT_TEMPLATE) RabbitTemplate rabbitTemplate,
+            Set<QueueingProperties> queueingProperties
+    ) {
+        return new RabbitScheduleServiceMessageSender(rabbitTemplate, queueingProperties);
     }
 
 }
