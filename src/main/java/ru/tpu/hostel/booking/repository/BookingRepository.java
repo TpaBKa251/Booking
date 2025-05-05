@@ -9,6 +9,7 @@ import ru.tpu.hostel.booking.entity.BookingStatus;
 import ru.tpu.hostel.booking.entity.BookingType;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -76,5 +77,7 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
                 AND FUNCTION('DATE_TRUNC', 'day', b.startTime) = :day
             """)
     List<Booking> findAllBookedBookingsOnSpecificDay(@Param("day") LocalDate day);
+
+    List<Booking> findAllByTimeSlotIn(Collection<UUID> timeSlots);
 
 }

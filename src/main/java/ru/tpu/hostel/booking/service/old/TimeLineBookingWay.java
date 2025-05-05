@@ -2,8 +2,6 @@ package ru.tpu.hostel.booking.service.old;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.tpu.hostel.booking.common.exception.ServiceException;
-import ru.tpu.hostel.booking.common.utils.TimeUtil;
 import ru.tpu.hostel.booking.dto.request.BookingTimeLineRequest;
 import ru.tpu.hostel.booking.dto.response.BookingResponse;
 import ru.tpu.hostel.booking.dto.response.BookingShortResponse;
@@ -12,6 +10,8 @@ import ru.tpu.hostel.booking.entity.BookingStatus;
 import ru.tpu.hostel.booking.entity.BookingType;
 import ru.tpu.hostel.booking.mapper.BookingMapperOld;
 import ru.tpu.hostel.booking.repository.BookingRepositoryOld;
+import ru.tpu.hostel.internal.exception.ServiceException;
+import ru.tpu.hostel.internal.utils.TimeUtil;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

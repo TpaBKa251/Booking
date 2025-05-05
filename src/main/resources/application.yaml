@@ -71,7 +71,7 @@ queueing:
       exchangeName: schedule-timeslots-exchange
       routingKey: schedule-timeslots
     cancel:
-      exchangeName: schedule-timeslots-exchangea
+      exchangeName: schedule-timeslots-exchange
       routingKey: schedule-timeslots-cancel
 
 otlp:

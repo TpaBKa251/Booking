@@ -1,10 +1,10 @@
 package ru.tpu.hostel.booking.service.old.state;
 
 import org.springframework.stereotype.Service;
-import ru.tpu.hostel.booking.common.exception.ServiceException;
 import ru.tpu.hostel.booking.entity.BookingOld;
 import ru.tpu.hostel.booking.repository.BookingRepositoryOld;
 import ru.tpu.hostel.booking.service.state.impl.CompletedState;
+import ru.tpu.hostel.internal.exception.ServiceException;
 
 /**
  * Этот класс устарел и будет удалён в будущем.

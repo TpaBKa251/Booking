@@ -5,7 +5,7 @@ import ru.tpu.hostel.booking.entity.Booking;
 import ru.tpu.hostel.booking.entity.BookingStatus;
 import ru.tpu.hostel.booking.repository.BookingRepository;
 import ru.tpu.hostel.booking.service.state.BookingState;
-import ru.tpu.hostel.booking.common.utils.TimeUtil;
+import ru.tpu.hostel.internal.utils.TimeUtil;
 
 /**
  * Реализация интерфейса {@link BookingState} для состояния "Забронировано"

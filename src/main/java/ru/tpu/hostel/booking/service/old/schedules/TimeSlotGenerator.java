@@ -10,13 +10,12 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import ru.tpu.hostel.booking.common.logging.LogFilter;
-import ru.tpu.hostel.booking.common.utils.TimeUtil;
 import ru.tpu.hostel.booking.entity.BookingType;
 import ru.tpu.hostel.booking.entity.Responsible;
 import ru.tpu.hostel.booking.entity.TimeSlot;
 import ru.tpu.hostel.booking.repository.ResponsibleRepository;
 import ru.tpu.hostel.booking.repository.TimeSlotRepository;
+import ru.tpu.hostel.internal.utils.TimeUtil;
 
 import java.io.IOException;
 import java.time.DayOfWeek;
@@ -50,7 +49,6 @@ public class TimeSlotGenerator {
     private final ResponsibleRepository responsibleRepository;
 
     @Bean
-    @LogFilter(enableResultLogging = false)
     public ApplicationRunner initializeGymTimeSlots() {
         return args -> generateSlotsForWeek();
     }

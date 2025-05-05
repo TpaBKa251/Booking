@@ -2,7 +2,6 @@ package ru.tpu.hostel.booking.service.old;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.tpu.hostel.booking.common.exception.ServiceException;
 import ru.tpu.hostel.booking.dto.request.ResponsibleSetRequest;
 import ru.tpu.hostel.booking.dto.response.ResponsibleResponse;
 import ru.tpu.hostel.booking.dto.response.ResponsibleResponseWithName;
@@ -13,6 +12,7 @@ import ru.tpu.hostel.booking.external.rest.user.dto.UserShortResponse;
 import ru.tpu.hostel.booking.mapper.ResponsibleMapper;
 import ru.tpu.hostel.booking.repository.ResponsibleRepository;
 import ru.tpu.hostel.booking.repository.TimeSlotRepository;
+import ru.tpu.hostel.internal.exception.ServiceException;
 
 import java.time.LocalDate;
 import java.util.List;

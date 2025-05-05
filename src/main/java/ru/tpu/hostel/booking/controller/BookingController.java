@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequest;
@@ -16,7 +17,7 @@ import ru.tpu.hostel.booking.dto.response.BookingResponseWithUser;
 import ru.tpu.hostel.booking.entity.BookingStatus;
 import ru.tpu.hostel.booking.entity.BookingType;
 import ru.tpu.hostel.booking.service.BookingService;
-import ru.tpu.hostel.booking.service.access.Roles;
+import ru.tpu.hostel.internal.HostelCoreAutoConfiguration;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -40,9 +41,9 @@ public class BookingController {
      * @param userId ID юзера, который делает бронь
      * @return ДТО-ответ с информацией о брони
      */
-    @PostMapping("/{userId}")
-    public BookingResponse book(@RequestBody @Valid BookingTimeSlotRequest bookingTimeSlotRequestDto, @PathVariable UUID userId) {
-        return bookingService.createBooking(bookingTimeSlotRequestDto, userId);
+    @PostMapping
+    public BookingResponse book(@RequestBody @Valid BookingTimeSlotRequest bookingTimeSlotRequestDto) {
+        return bookingService.createBooking(bookingTimeSlotRequestDto);
     }
 
     /**
@@ -52,13 +53,9 @@ public class BookingController {
      * @param userId ID юзера, который закрывает бронь
      * @return ДТО-ответ с информацией о брони
      */
-    @PatchMapping("/cancel/{bookingId}/{userId}/{userRoles}")
-    public BookingResponse cancel(
-            @PathVariable UUID bookingId,
-            @PathVariable UUID userId,
-            @PathVariable Roles[] userRoles
-    ) {
-        return bookingService.cancelBooking(bookingId, userId, userRoles);
+    @PatchMapping("/cancel/{bookingId}")
+    public BookingResponse cancel(@PathVariable UUID bookingId) {
+        return bookingService.cancelBooking(bookingId);
     }
 
     /**
@@ -68,7 +65,7 @@ public class BookingController {
      * @param userId ID юзера
      * @return список ДТО-ответов с информацией о бронях
      */
-    @GetMapping("/all/by/status/user/{status}/{userId}")
+    @GetMapping("get/all/by/status/user/{status}/{userId}")
     public List<BookingResponse> getAllByStatus(@PathVariable BookingStatus status, @PathVariable UUID userId) {
         return bookingService.getUserBookingsByStatus(status, userId);
     }
@@ -79,7 +76,7 @@ public class BookingController {
      * @param userId ID юзера
      * @return список ДТО-ответов с информацией о бронях
      */
-    @GetMapping("/all/by/user/{userId}")
+    @GetMapping("get/all/by/user/{userId}")
     public List<BookingResponse> getAllByUserId(@PathVariable UUID userId) {
         return bookingService.getBookingsByUser(userId);
     }
@@ -91,7 +88,7 @@ public class BookingController {
      * @param date дата
      * @return список ДТО-ответов с информацией о бронях с ID юзера
      */
-    @GetMapping("/all/by/type/date/{type}/{date}")
+    @GetMapping("get/all/by/type/date/{type}/{date}")
     public List<BookingResponseWithUser> getAllByTypeAndDate(
             @PathVariable BookingType type,
             @PathVariable LocalDate date
@@ -105,7 +102,7 @@ public class BookingController {
      * @param date дата
      * @return список ДТО-ответов с информацией о бронях с ID юзера
      */
-    @GetMapping("/all/by/date/{date}")
+    @GetMapping("get/all/by/date/{date}")
     public List<BookingResponseWithUser> getAllByDate(@PathVariable LocalDate date) {
         return bookingService.getBookingsByDateWithUser(date);
     }

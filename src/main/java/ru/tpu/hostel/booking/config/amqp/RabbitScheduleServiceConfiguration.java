@@ -6,6 +6,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.AmqpAdmin;
+import org.springframework.amqp.core.MessageDeliveryMode;
+import org.springframework.amqp.core.MessageProperties;
+import org.springframework.amqp.core.MessagePropertiesBuilder;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -17,12 +20,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import ru.tpu.hostel.booking.external.amqp.AmqpMessageSender;
-import ru.tpu.hostel.booking.external.amqp.MessageSender;
 import ru.tpu.hostel.booking.external.amqp.schedule.ScheduleMessageType;
-import ru.tpu.hostel.booking.external.amqp.schedule.RabbitScheduleServiceBookMessageSender;
-import ru.tpu.hostel.booking.external.amqp.schedule.RabbitScheduleServiceMessageSender;
-import ru.tpu.hostel.booking.external.amqp.schedule.dto.ScheduleResponse;
+import ru.tpu.hostel.internal.config.amqp.AmqpMessagingConfig;
+import ru.tpu.hostel.internal.external.amqp.Microservice;
 
 import java.util.Set;
 
@@ -47,8 +47,6 @@ public class RabbitScheduleServiceConfiguration {
     private static final String SCHEDULES_SERVICE_RABBIT_TEMPLATE = "schedulesServiceRabbitTemplate";
 
     private static final String SCHEDULES_SERVICE_MESSAGE_CONVERTER = "schedulesServiceMessageConverter";
-
-    private static final String SCHEDULES_SERVICE_BOOK_AMQP_MESSAGE_SENDER = "schedulesServiceBookAmqpMessageSender";
 
     @Bean(SCHEDULES_SERVICE_MESSAGE_CONVERTER)
     public MessageConverter schedulesServiceMessageConverter() {
@@ -100,20 +98,81 @@ public class RabbitScheduleServiceConfiguration {
         return factory;
     }
 
-    @Bean(SCHEDULES_SERVICE_BOOK_AMQP_MESSAGE_SENDER)
-    public AmqpMessageSender schedulesServiceBookAmqpMessageSender(
+    @Bean
+    public AmqpMessagingConfig schedulesServiceAmqpMessagingConfigBook(
             @Qualifier(SCHEDULES_SERVICE_CONNECTION_FACTORY) ConnectionFactory connectionFactory,
-            RabbitScheduleServiceBookQueueingProperties queueProperties
+            @Qualifier(SCHEDULES_SERVICE_MESSAGE_CONVERTER) MessageConverter messageConverter,
+            RabbitScheduleServiceBookQueueingProperties properties
     ) {
-        return new RabbitScheduleServiceBookMessageSender(connectionFactory, queueProperties);
+        return new AmqpMessagingConfig() {
+            @Override
+            public RabbitTemplate rabbitTemplate() {
+                RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+                rabbitTemplate.setMessageConverter(messageConverter);
+                rabbitTemplate.setExchange(properties.exchangeName());
+                rabbitTemplate.setRoutingKey(properties.routingKey());
+                rabbitTemplate.setObservationEnabled(true);
+                return rabbitTemplate;
+            }
+
+            @Override
+            public MessageProperties messageProperties() {
+                return MessagePropertiesBuilder.newInstance()
+                        .setPriority(10)
+                        .setDeliveryMode(MessageDeliveryMode.PERSISTENT)
+                        .setContentType(MessageProperties.CONTENT_TYPE_JSON)
+                        .build();
+            }
+
+            @Override
+            public Set<Microservice> receivingMicroservices() {
+                return Set.of(Microservice.SCHEDULE);
+            }
+
+            @Override
+            public boolean isApplicable(Enum<?> amqpMessageType) {
+                return amqpMessageType == ScheduleMessageType.BOOK;
+            }
+        };
     }
 
     @Bean
-    public MessageSender<ScheduleMessageType, ScheduleResponse> schedulesServiceMessageSender(
-            @Qualifier(SCHEDULES_SERVICE_RABBIT_TEMPLATE) RabbitTemplate rabbitTemplate,
-            Set<QueueingProperties> queueingProperties
+    public AmqpMessagingConfig schedulesServiceAmqpMessagingConfigCancel(
+            @Qualifier(SCHEDULES_SERVICE_CONNECTION_FACTORY) ConnectionFactory connectionFactory,
+            @Qualifier(SCHEDULES_SERVICE_MESSAGE_CONVERTER) MessageConverter messageConverter,
+            RabbitScheduleServiceCancelQueueingProperties properties
     ) {
-        return new RabbitScheduleServiceMessageSender(rabbitTemplate, queueingProperties);
+        return new AmqpMessagingConfig() {
+            @Override
+            public RabbitTemplate rabbitTemplate() {
+                RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+                rabbitTemplate.setMessageConverter(messageConverter);
+                rabbitTemplate.setExchange(properties.exchangeName());
+                rabbitTemplate.setRoutingKey(properties.routingKey());
+                rabbitTemplate.setChannelTransacted(true);
+                rabbitTemplate.setObservationEnabled(true);
+                return rabbitTemplate;
+            }
+
+            @Override
+            public MessageProperties messageProperties() {
+                return MessagePropertiesBuilder.newInstance()
+                        .setPriority(10)
+                        .setDeliveryMode(MessageDeliveryMode.PERSISTENT)
+                        .setContentType(MessageProperties.CONTENT_TYPE_JSON)
+                        .build();
+            }
+
+            @Override
+            public Set<Microservice> receivingMicroservices() {
+                return Set.of(Microservice.SCHEDULE);
+            }
+
+            @Override
+            public boolean isApplicable(Enum<?> amqpMessageType) {
+                return amqpMessageType == ScheduleMessageType.CANCEL;
+            }
+        };
     }
 
 }
