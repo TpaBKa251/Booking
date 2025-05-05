@@ -82,6 +82,9 @@ services:
     build:
       dockerfile: Dockerfile-local
       context: .
+      args:
+        INTERNAL_REPO_LOGIN: ${INTERNAL_REPO_LOGIN}
+        INTERNAL_REPO_PASSWORD: ${INTERNAL_REPO_PASSWORD}
     hostname: bookingservice
     ports:
       - "8082:8080"
@@ -89,6 +92,8 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://hostelDB:5432/hostelService
       - SPRING_DATASOURCE_USERNAME=hostel
       - SPRING_DATASOURCE_PASSWORD=ilia
+      - INTERNAL_REPO_LOGIN=${INTERNAL_REPO_LOGIN}
+      - INTERNAL_REPO_PASSWORD=${INTERNAL_REPO_PASSWORD}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 10s
