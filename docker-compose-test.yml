@@ -36,6 +36,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-test
+      args:
+        INTERNAL_REPO_LOGIN: ${INTERNAL_REPO_LOGIN}
+        INTERNAL_REPO_PASSWORD: ${INTERNAL_REPO_PASSWORD}
     container_name: my-app
     depends_on:
       postgres:
@@ -47,6 +50,8 @@ services:
       RABBITMQ_SCHEDULES-SERVICE_USERNAME: test_user
       RABBITMQ_SCHEDULES-SERVICE_PASSWORD: test_password
       RABBITMQ_SCHEDULES-SERVICE_VIRTUALHOST: test-host
+      INTERNAL_REPO_LOGIN: ${INTERNAL_REPO_LOGIN}
+      INTERNAL_REPO_PASSWORD: ${INTERNAL_REPO_PASSWORD}
     ports:
       - "8080:8080"
     healthcheck:
