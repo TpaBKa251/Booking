@@ -1,13 +1,10 @@
 package ru.tpu.hostel.booking.service.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.core.Message;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.transaction.RabbitTransactionManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.tpu.hostel.booking.common.exception.ServiceException;
-import ru.tpu.hostel.booking.common.utils.TimeUtil;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequest;
 import ru.tpu.hostel.booking.dto.response.BookingResponse;
 import ru.tpu.hostel.booking.dto.response.BookingResponseWithUser;
@@ -15,81 +12,74 @@ import ru.tpu.hostel.booking.dto.response.TimeSlotResponse;
 import ru.tpu.hostel.booking.entity.Booking;
 import ru.tpu.hostel.booking.entity.BookingStatus;
 import ru.tpu.hostel.booking.entity.BookingType;
-import ru.tpu.hostel.booking.external.amqp.AmqpMessageSender;
+import ru.tpu.hostel.booking.external.amqp.schedule.ScheduleMessageType;
+import ru.tpu.hostel.booking.external.amqp.schedule.dto.Failure;
+import ru.tpu.hostel.booking.external.amqp.schedule.dto.ScheduleResponse;
 import ru.tpu.hostel.booking.external.amqp.schedule.dto.Timeslot;
-import ru.tpu.hostel.booking.external.rest.user.UserServiceClient;
 import ru.tpu.hostel.booking.mapper.BookingMapper;
 import ru.tpu.hostel.booking.repository.BookingRepository;
 import ru.tpu.hostel.booking.service.BookingService;
+import ru.tpu.hostel.internal.exception.ServiceException;
+import ru.tpu.hostel.internal.external.amqp.AmqpMessageSender;
+import ru.tpu.hostel.internal.utils.ExecutionContext;
+import ru.tpu.hostel.internal.utils.Roles;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static ru.tpu.hostel.booking.entity.BookingStatus.BOOKED;
-import static ru.tpu.hostel.booking.entity.BookingStatus.CANCELLED;
 
 /**
  * Реализация сервиса броней {@link BookingService}
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepository;
 
-    private final AmqpMessageSender schedulesServiceAmqpMessageSender;
-
-    private final UserServiceClient userServiceClient;
+    private final AmqpMessageSender amqpMessageSender;
 
     private final BookingMapper bookingMapper;
 
-    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-
     @Transactional
     @Override
-    public BookingResponse createBooking(BookingTimeSlotRequest bookingTimeSlotRequest, UUID userId) {
-        Timeslot timeslot;
-        try {
-            Message message = schedulesServiceAmqpMessageSender.sendAndReceive(
-                    bookingTimeSlotRequest.slotId().toString(),
-                    bookingTimeSlotRequest.slotId()
-            );
-            timeslot = objectMapper.readValue(message.getBody(), Timeslot.class);
-        } catch (Exception e) {
-            throw new ServiceException.ServiceUnavailable("Сервис расписаний не отвечает", e);
-        }
+    public BookingResponse createBooking(BookingTimeSlotRequest bookingTimeSlotRequest) {
+        UUID userId = ExecutionContext.get().getUserID();
+        bookingRepository.findByTimeSlotAndUserAndStatus(bookingTimeSlotRequest.slotId(), userId, BOOKED)
+                .ifPresent(booking -> {
+                    throw new ServiceException.BadRequest("Вы не можете забронировать слот повторно");
+                });
 
-        List<Booking> bookings = bookingRepository.findAllByStatusNotAndTimeSlot(CANCELLED, timeslot.id());
-        if (bookings.size() == timeslot.limit()) {
-            throw new ServiceException.BadRequest("Слот уже забронирован");
-        }
-        if (timeslot.startTime().isBefore(TimeUtil.now())) {
-            throw new ServiceException.BadRequest("Вы можете забронировать только слоты,"
-                    + " время начала которых позже текущего времени");
-        }
-
-        // Возможно это не надо
-        Optional<Booking> bookingOptional = bookingRepository.findByTimeSlotAndUserAndStatus(
-                timeslot.id(),
-                userId,
-                BOOKED
+        ScheduleResponse scheduleResponse = amqpMessageSender.sendAndReceive(
+                ScheduleMessageType.BOOK,
+                bookingTimeSlotRequest.slotId().toString(),
+                bookingTimeSlotRequest.slotId(),
+                ScheduleResponse.class
         );
-        if (bookingOptional.isPresent()) {
-            throw new ServiceException.BadRequest("Вы не можете забронировать слот повторно");
-        }
 
-        Booking booking = new Booking();
-        booking.setUser(userId);
-        booking.setTimeSlot(timeslot.id());
-        booking.setStartTime(timeslot.startTime());
-        booking.setEndTime(timeslot.endTime());
-        booking.setStatus(BOOKED);
-        booking.setType(timeslot.type());
+        Booking booking = getBooking(userId, scheduleResponse);
         bookingRepository.save(booking);
 
         return bookingMapper.mapToBookingResponse(booking);
+    }
+
+    private Booking getBooking(UUID userId, ScheduleResponse scheduleResponse) {
+        if (scheduleResponse instanceof Failure failure) {
+            throw new ServiceException(failure.getMessage(), failure.getHttpStatus());
+        }
+
+        Timeslot timeslot = (Timeslot) scheduleResponse;
+        Booking booking = new Booking();
+        booking.setUser(userId);
+        booking.setTimeSlot(timeslot.getId());
+        booking.setStartTime(timeslot.getStartTime());
+        booking.setEndTime(timeslot.getEndTime());
+        booking.setStatus(BOOKED);
+        booking.setType(timeslot.getType());
+        return booking;
     }
 
     @Override
@@ -102,28 +92,33 @@ public class BookingServiceImpl implements BookingService {
         return List.of();
     }
 
+    @Transactional
     @Override
-    public BookingResponse cancelBooking(UUID bookingId, UUID userId) {
+    public BookingResponse cancelBooking(UUID bookingId) {
+        ExecutionContext context = ExecutionContext.get();
         Booking bookingToCancel = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ServiceException.NotFound("Бронь не найдена"));
 
-        if (bookingToCancel.getUser().equals(userId)) {
-            bookingToCancel.getBookingState().cancelBooking(bookingToCancel, bookingRepository);
+        if (bookingToCancel.getUser().equals(context.getUserID())
+                || Roles.hasPermissionToManageResourceType(context.getUserRoles(), bookingToCancel.getType())) {
+            processCancellation(bookingToCancel);
             return bookingMapper.mapToBookingResponse(bookingToCancel);
         }
 
-        // TODO: поменять FeignClinet у юзера на RabbitMQ по RPC
-        List<String> userRoles = userServiceClient.getAllRolesByUserId(userId);
-        for (String userRole : userRoles) {
-            if (userRole.contains(bookingToCancel.getType().toString())
-                    || userRole.contains("HOSTEL_SUPERVISOR")
-                    || userRole.contains("ADMINISTRATION")) {
-                bookingToCancel.getBookingState().cancelBooking(bookingToCancel, bookingRepository);
-                return bookingMapper.mapToBookingResponse(bookingToCancel);
-            }
-        }
-
         throw new ServiceException.Forbidden("Вы не можете закрыть чужую бронь");
+    }
+
+    private void processCancellation(Booking bookingToCancel) {
+        bookingToCancel.getBookingState().cancelBooking(bookingToCancel, bookingRepository);
+        try {
+            amqpMessageSender.send(
+                    ScheduleMessageType.CANCEL,
+                    bookingToCancel.getId().toString(),
+                    bookingToCancel.getTimeSlot()
+            );
+        } catch (ServiceException e) {
+            throw new ServiceException("Не можем закрыть бронь, попробуйте позже", e.getStatus());
+        }
     }
 
     @Override

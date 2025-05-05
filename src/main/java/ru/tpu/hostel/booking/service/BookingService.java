@@ -23,7 +23,7 @@ public interface BookingService {
      * @param userId                 ID юзера
      * @return ДТО-ответ созданной брони
      */
-    BookingResponse createBooking(BookingTimeSlotRequest bookingTimeSlotRequest, UUID userId);
+    BookingResponse createBooking(BookingTimeSlotRequest bookingTimeSlotRequest);
 
     /**
      * Возвращает доступные для брони слоты в виде списка ДТО-ответов
@@ -42,7 +42,7 @@ public interface BookingService {
      * @param userId    ID юзера
      * @return ДТО-ответ закрытой брони
      */
-    BookingResponse cancelBooking(UUID bookingId, UUID userId);
+    BookingResponse cancelBooking(UUID bookingId);
 
     /**
      * Возвращает список из ДТО-ответов броней по статусу для юзера

@@ -3,8 +3,6 @@ package ru.tpu.hostel.booking.service.old;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.tpu.hostel.booking.common.exception.ServiceException;
-import ru.tpu.hostel.booking.common.utils.TimeUtil;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequest;
 import ru.tpu.hostel.booking.dto.response.BookingResponse;
 import ru.tpu.hostel.booking.dto.response.TimeSlotResponse;
@@ -12,12 +10,14 @@ import ru.tpu.hostel.booking.entity.BookingOld;
 import ru.tpu.hostel.booking.entity.BookingStatus;
 import ru.tpu.hostel.booking.entity.BookingType;
 import ru.tpu.hostel.booking.entity.TimeSlot;
-import ru.tpu.hostel.booking.external.amqp.AmqpMessageSender;
 import ru.tpu.hostel.booking.mapper.BookingMapperOld;
 import ru.tpu.hostel.booking.mapper.SlotMapper;
 import ru.tpu.hostel.booking.repository.BookingRepositoryOld;
 import ru.tpu.hostel.booking.repository.ResponsibleRepository;
 import ru.tpu.hostel.booking.repository.TimeSlotRepository;
+import ru.tpu.hostel.internal.exception.ServiceException;
+import ru.tpu.hostel.internal.external.amqp.AmqpMessageSender;
+import ru.tpu.hostel.internal.utils.TimeUtil;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -44,18 +44,9 @@ public class TimeSlotBookingWay {
 
     private final ResponsibleRepository responsibleRepository;
 
-    private final AmqpMessageSender schedulesServiceAmqpMessageSender;
+    private final AmqpMessageSender schedulesServiceBookAmqpMessageSender;
 
     public BookingResponse createBooking(BookingTimeSlotRequest bookingTimeSlotRequestDto, UUID userId) {
-        try {
-            schedulesServiceAmqpMessageSender.sendAndReceive(
-                    bookingTimeSlotRequestDto.slotId().toString(),
-                    bookingTimeSlotRequestDto.slotId()
-            );
-        } catch (Exception e) {
-            log.error("Что-то пошло не так", e);
-        }
-
         TimeSlot timeSlot = timeSlotRepository.findById(bookingTimeSlotRequestDto.slotId())
                 .orElseThrow(() -> new ServiceException.NotFound("Слот не найден"));
 

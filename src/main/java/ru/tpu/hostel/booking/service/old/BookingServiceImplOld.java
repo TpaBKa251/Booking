@@ -3,7 +3,6 @@ package ru.tpu.hostel.booking.service.old;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.tpu.hostel.booking.common.exception.ServiceException;
 import ru.tpu.hostel.booking.dto.request.BookingTimeLineRequest;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequest;
 import ru.tpu.hostel.booking.dto.response.BookingResponse;
@@ -17,6 +16,7 @@ import ru.tpu.hostel.booking.external.rest.user.UserServiceClient;
 import ru.tpu.hostel.booking.mapper.BookingMapperOld;
 import ru.tpu.hostel.booking.repository.BookingRepositoryOld;
 import ru.tpu.hostel.booking.service.impl.BookingServiceImpl;
+import ru.tpu.hostel.internal.exception.ServiceException;
 
 import java.time.LocalDate;
 import java.util.List;

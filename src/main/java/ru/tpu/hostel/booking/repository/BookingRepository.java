@@ -1,8 +1,6 @@
 package ru.tpu.hostel.booking.repository;
 
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -11,6 +9,7 @@ import ru.tpu.hostel.booking.entity.BookingStatus;
 import ru.tpu.hostel.booking.entity.BookingType;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,24 +19,6 @@ import java.util.UUID;
  */
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, UUID> {
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)  // Блокировка на запись
-    @Query("""
-            SELECT b FROM Booking b
-            WHERE b.timeSlot = :timeSlotId
-                AND b.status != 'CANCELLED'
-            """)
-    List<Booking> findAllActiveBookingsForSlot(@Param("timeSlotId") UUID timeSlotId);
-
-    /**
-     * Ищет все брони с указанным статусом и ID таймслота
-     *
-     * @param status   статус брони
-     * @param timeSlot ID таймслота
-     * @return список найденных броней
-     */
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    List<Booking> findAllByStatusNotAndTimeSlot(BookingStatus status, UUID timeSlot);
 
     /**
      * Ищет все брони, принадлежащие юзеру
@@ -96,5 +77,7 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
                 AND FUNCTION('DATE_TRUNC', 'day', b.startTime) = :day
             """)
     List<Booking> findAllBookedBookingsOnSpecificDay(@Param("day") LocalDate day);
+
+    List<Booking> findAllByTimeSlotIn(Collection<UUID> timeSlots);
 
 }

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.Getter;
 import lombok.Setter;
-import ru.tpu.hostel.booking.common.logging.LogFilter;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,7 +15,6 @@ import java.util.UUID;
 @Deprecated(forRemoval = true)
 @Setter
 @Getter
-@LogFilter(enableMethodLogging = false)
 public class SchedulesConfig {
 
     private Map<String, Schedule> schedules;

@@ -8,8 +8,6 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 import ru.tpu.hostel.booking.dto.request.BookingTimeLineRequest;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequest;
 import ru.tpu.hostel.booking.dto.response.BookingResponse;
@@ -32,9 +30,9 @@ import java.util.UUID;
  * @see BookingController
  */
 @SuppressWarnings("removal")
-//@Deprecated(forRemoval = true)
-@RestController
-@RequestMapping("bookings")
+@Deprecated(forRemoval = true)
+//@RestController
+//@RequestMapping("bookings")
 @RequiredArgsConstructor
 @Slf4j
 public class BookingControllerOld {

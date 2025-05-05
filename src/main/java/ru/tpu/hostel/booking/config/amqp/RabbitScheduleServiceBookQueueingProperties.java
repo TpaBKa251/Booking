@@ -13,20 +13,14 @@ import org.springframework.validation.annotation.Validated;
  * @param replyRoutingKey Имя ключа маршрутизации для получения ответа
  */
 @Validated
-@ConfigurationProperties(prefix = "queueing.schedules-service")
-public record RabbitScheduleServiceQueueingProperties(
+@ConfigurationProperties(prefix = "queueing.schedules-service.book")
+public record RabbitScheduleServiceBookQueueingProperties(
 
         @NotEmpty
         String exchangeName,
 
         @NotEmpty
-        String queueReplyName,
-
-        @NotEmpty
-        String routingKey,
-
-        @NotEmpty
-        String replyRoutingKey
+        String routingKey
 
 ) {
 }

@@ -1,11 +1,11 @@
 package ru.tpu.hostel.booking.service.old.state;
 
 import org.springframework.stereotype.Service;
-import ru.tpu.hostel.booking.common.utils.TimeUtil;
 import ru.tpu.hostel.booking.entity.BookingOld;
 import ru.tpu.hostel.booking.entity.BookingStatus;
 import ru.tpu.hostel.booking.repository.BookingRepositoryOld;
 import ru.tpu.hostel.booking.service.state.impl.BookedState;
+import ru.tpu.hostel.internal.utils.TimeUtil;
 
 /**
  * Этот класс устарел и будет удалён в будущем.
