@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.tpu.hostel.booking.entity.Booking;
 import ru.tpu.hostel.booking.repository.BookingRepository;
+import ru.tpu.hostel.internal.common.logging.LogFilter;
 
 import java.util.List;
 
@@ -27,6 +28,7 @@ public class BookingStateUpdater {
      * @return хэзик че возвращает :)
      */
     @Bean
+    @LogFilter(enableMethodLogging = false)
     public ApplicationRunner updateBookingStatusesOnStart() {
         return args -> updateBookingStatuses();
     }
