@@ -111,7 +111,6 @@ public class RabbitScheduleServiceConfiguration {
                 rabbitTemplate.setMessageConverter(messageConverter);
                 rabbitTemplate.setExchange(properties.exchangeName());
                 rabbitTemplate.setRoutingKey(properties.routingKey());
-                rabbitTemplate.setChannelTransacted(true);
                 rabbitTemplate.setObservationEnabled(true);
                 return rabbitTemplate;
             }
