@@ -1,9 +1,12 @@
 package ru.tpu.hostel.booking.repository;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import ru.tpu.hostel.booking.entity.Booking;
 import ru.tpu.hostel.booking.entity.BookingStatus;
 import ru.tpu.hostel.booking.entity.BookingType;
@@ -55,7 +58,7 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
      * @return список найденных броней
      */
     @Query("""
-            SELECT b FROM BookingOld b
+            SELECT b FROM Booking b
             WHERE b.type = :type
                 AND FUNCTION('DATE_TRUNC', 'day', b.startTime) = :day
                 AND b.status = 'BOOKED'
@@ -72,12 +75,17 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
      * @return список найденных броней
      */
     @Query("""
-            SELECT b FROM BookingOld b
+            SELECT b FROM Booking b
             WHERE b.status = 'BOOKED'
                 AND FUNCTION('DATE_TRUNC', 'day', b.startTime) = :day
             """)
     List<Booking> findAllBookedBookingsOnSpecificDay(@Param("day") LocalDate day);
 
     List<Booking> findAllByTimeSlotIn(Collection<UUID> timeSlots);
+
+    @Query("SELECT b FROM Booking b WHERE b.id = :id")
+    @Transactional
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<Booking> findByIdForUpdate(@Param("id") UUID id);
 
 }

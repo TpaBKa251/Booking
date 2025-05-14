@@ -2,8 +2,8 @@ package ru.tpu.hostel.booking.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.transaction.RabbitTransactionManager;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequest;
 import ru.tpu.hostel.booking.dto.response.BookingResponse;
@@ -92,11 +92,11 @@ public class BookingServiceImpl implements BookingService {
         return List.of();
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     @Override
     public BookingResponse cancelBooking(UUID bookingId) {
         ExecutionContext context = ExecutionContext.get();
-        Booking bookingToCancel = bookingRepository.findById(bookingId)
+        Booking bookingToCancel = bookingRepository.findByIdForUpdate(bookingId)
                 .orElseThrow(() -> new ServiceException.NotFound("Бронь не найдена"));
 
         if (bookingToCancel.getUser().equals(context.getUserID())
