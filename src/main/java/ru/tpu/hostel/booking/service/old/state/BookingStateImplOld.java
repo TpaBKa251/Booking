@@ -8,7 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.tpu.hostel.booking.entity.BookingOld;
 import ru.tpu.hostel.booking.repository.BookingRepositoryOld;
-import ru.tpu.hostel.booking.service.state.BookingStateUpdater;
+import ru.tpu.hostel.booking.scheduler.BookingStateUpdater;
 
 import java.util.List;
 

@@ -1,14 +1,12 @@
-package ru.tpu.hostel.booking.service.state;
+package ru.tpu.hostel.booking.scheduler;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.ApplicationRunner;
-import org.springframework.context.annotation.Bean;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import ru.tpu.hostel.booking.entity.Booking;
 import ru.tpu.hostel.booking.repository.BookingRepository;
-import ru.tpu.hostel.internal.common.logging.LogFilter;
 
 import java.util.List;
 
@@ -17,26 +15,15 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
-@EnableScheduling
 public class BookingStateUpdater {
 
     private final BookingRepository bookingRepository;
 
     /**
-     * Бин для вызова метода на старте приложения
-     *
-     * @return хэзик че возвращает :)
-     */
-    @Bean
-    @LogFilter(enableMethodLogging = false)
-    public ApplicationRunner updateBookingStatusesOnStart() {
-        return args -> updateBookingStatuses();
-    }
-
-    /**
      * Обновляет статус всех броней каждые 10 минут
      */
     @Scheduled(cron = "0 0/10 * * * ?", zone = "Asia/Tomsk")
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     public void updateBookingStatuses() {
         List<Booking> bookings = bookingRepository.findAll();
 
