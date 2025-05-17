@@ -1,0 +1,211 @@
+openapi: "3.1.0"
+info:
+  title: "Booking API"
+  description: "Booking API"
+  version: "1.0.0"
+servers:
+  - url: "https://Booking"
+paths:
+  /bookings/cancel/{bookingId}:
+    patch:
+      summary: "PATCH bookings/cancel/{bookingId}"
+      operationId: "cancel"
+      parameters:
+        - name: "bookingId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+  /bookings:
+    post:
+      summary: "POST bookings"
+      operationId: "book"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingTimeSlotRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+  /bookings/get/all/by/status/user/{status}/{userId}:
+    get:
+      summary: "GET bookings/get/all/by/status/user/{status}/{userId}"
+      operationId: "getAllByStatus"
+      parameters:
+        - name: "status"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            enum:
+              - "NOT_BOOKED"
+              - "BOOKED"
+              - "IN_PROGRESS"
+              - "CANCELLED"
+              - "COMPLETED"
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/BookingResponse"
+  /bookings/get/all/by/user/{userId}:
+    get:
+      summary: "GET bookings/get/all/by/user/{userId}"
+      operationId: "getAllByUserId"
+      parameters:
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/BookingResponse"
+  /bookings/get/all/by/type/date/{type}/{date}:
+    get:
+      summary: "GET bookings/get/all/by/type/date/{type}/{date}"
+      operationId: "getAllByTypeAndDate"
+      parameters:
+        - name: "type"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            enum:
+              - "HALL"
+              - "INTERNET"
+              - "GYM"
+              - "KITCHEN"
+        - name: "date"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "date"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/BookingResponseWithUser"
+  /bookings/get/all/by/date/{date}:
+    get:
+      summary: "GET bookings/get/all/by/date/{date}"
+      operationId: "getAllByDate"
+      parameters:
+        - name: "date"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "date"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/BookingResponseWithUser"
+components:
+  schemas:
+    BookingResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          nullable: true
+        startTime:
+          type: "string"
+          format: "date-time"
+          nullable: true
+        endTime:
+          type: "string"
+          format: "date-time"
+          nullable: true
+        status:
+          type: "string"
+          nullable: true
+          enum:
+            - "NOT_BOOKED"
+            - "BOOKED"
+            - "IN_PROGRESS"
+            - "CANCELLED"
+            - "COMPLETED"
+        type:
+          type: "string"
+          nullable: true
+    BookingTimeSlotRequest:
+      type: "object"
+      properties:
+        slotId:
+          type: "string"
+          format: "uuid"
+          nullable: true
+    BookingResponseWithUser:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          nullable: true
+        userId:
+          type: "string"
+          format: "uuid"
+          nullable: true
+        startTime:
+          type: "string"
+          format: "date-time"
+          nullable: true
+        endTime:
+          type: "string"
+          format: "date-time"
+          nullable: true
+        status:
+          type: "string"
+          nullable: true
+          enum:
+            - "NOT_BOOKED"
+            - "BOOKED"
+            - "IN_PROGRESS"
+            - "CANCELLED"
+            - "COMPLETED"
+        type:
+          type: "string"
+          nullable: true

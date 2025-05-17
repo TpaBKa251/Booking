@@ -2,6 +2,7 @@ package ru.tpu.hostel.booking.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,10 +49,6 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponse createBooking(BookingTimeSlotRequest bookingTimeSlotRequest) {
         UUID userId = ExecutionContext.get().getUserID();
-        bookingRepository.findByTimeSlotAndUserAndStatus(bookingTimeSlotRequest.slotId(), userId, BOOKED)
-                .ifPresent(booking -> {
-                    throw new ServiceException.BadRequest("Вы не можете забронировать слот повторно");
-                });
 
         ScheduleResponse scheduleResponse = amqpMessageSender.sendAndReceive(
                 ScheduleMessageType.BOOK,
@@ -61,9 +58,12 @@ public class BookingServiceImpl implements BookingService {
         );
 
         Booking booking = getBooking(userId, scheduleResponse);
-        bookingRepository.save(booking);
 
-        return bookingMapper.mapToBookingResponse(booking);
+        try {
+            return bookingMapper.mapToBookingResponse(bookingRepository.save(booking));
+        } catch (ConstraintViolationException e) {
+            throw new ServiceException.Conflict("Вы не можете забронировать слот повторно");
+        }
     }
 
     private Booking getBooking(UUID userId, ScheduleResponse scheduleResponse) {
