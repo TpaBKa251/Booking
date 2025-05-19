@@ -49,6 +49,9 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponse createBooking(BookingTimeSlotRequest bookingTimeSlotRequest) {
         UUID userId = ExecutionContext.get().getUserID();
+        if (bookingRepository.existsByTimeSlotAndUser(bookingTimeSlotRequest.slotId(), userId)) {
+            throw new ServiceException.Conflict("Вы не можете забронировать слот повторно");
+        }
 
         ScheduleResponse scheduleResponse = amqpMessageSender.sendAndReceive(
                 ScheduleMessageType.BOOK,
