@@ -18,7 +18,7 @@ public interface BookingMapper {
      * @param booking бронь
      * @return ДТО для ответа
      */
-    @Mapping(target = "type", expression = "java(booking.getType().name())")
+    @Mapping(target = "type", expression = "java(booking.getType().getBookingTypeName())")
     BookingResponse mapToBookingResponse(Booking booking);
 
     /**
@@ -27,7 +27,7 @@ public interface BookingMapper {
      * @param booking бронь
      * @return ДТО с ID юзера
      */
-    @Mapping(target = "type", expression = "java(booking.getType().name())")
+    @Mapping(target = "type", expression = "java(booking.getType().getBookingTypeName())")
     @Mapping(target = "userId", source = "user")
     BookingResponseWithUser mapToBookingResponseWithUser(Booking booking);
 

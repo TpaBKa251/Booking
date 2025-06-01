@@ -54,7 +54,6 @@ sonarqube {
         property "sonar.coverage.jacoco.xmlReportPaths", layout.buildDirectory.file("reports/jacoco/test/jacocoTestReport.xml")
         property "sonar.coverage.exclusions", "**/*Generated*.java,**/model/*.java"
         property "sonar.java.binaries", "build/classes/java/main"
-        property "sonar.exclusions", "**/client/**, **/controller/**, **/dto/**, **/entity/**, **/handler/**, **/mapper/**, **/repository/**, **/utils/**, **/service/**"
     }
 }
 
