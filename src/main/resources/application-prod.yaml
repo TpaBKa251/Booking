@@ -9,6 +9,8 @@ schedules:
 rabbitmq:
   schedules-service:
     addresses: 82.202.138.26:5672
+  notification-service:
+    addresses: 82.202.138.26:5672
 
 otlp:
   tracing:
