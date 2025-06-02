@@ -53,6 +53,10 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponse createBooking(BookingTimeSlotRequest bookingTimeSlotRequest) {
         UUID userId = ExecutionContext.get().getUserID();
+        if (bookingRepository.existsByTimeSlotAndUser(bookingTimeSlotRequest.slotId(), userId)) {
+            throw new ServiceException.Conflict("Вы не можете забронировать слот повторно");
+        }
+
         ScheduleResponse scheduleResponse = amqpMessageSender.sendAndReceive(
                 ScheduleMessageType.BOOK,
                 bookingTimeSlotRequest.slotId().toString(),
@@ -63,7 +67,7 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = getBooking(userId, scheduleResponse);
         try {
             bookingRepository.save(booking);
-            bookingRepository.flush();
+            //bookingRepository.flush();
             notificationSender.sendNotification(
                     userId,
                     NotificationType.BOOKING,
@@ -76,7 +80,7 @@ public class BookingServiceImpl implements BookingService {
             );
             return bookingMapper.mapToBookingResponse(booking);
         } catch (DataIntegrityViolationException e) {
-            sendMessageCancellation(bookingTimeSlotRequest.slotId(), bookingTimeSlotRequest.slotId());
+            //sendMessageCancellation(bookingTimeSlotRequest.slotId(), bookingTimeSlotRequest.slotId());
             throw new ServiceException.Conflict("Вы не можете забронировать слот повторно");
         }
     }
