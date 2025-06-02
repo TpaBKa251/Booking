@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequest;
 import ru.tpu.hostel.booking.dto.response.BookingResponse;
@@ -17,7 +17,6 @@ import ru.tpu.hostel.booking.dto.response.BookingResponseWithUser;
 import ru.tpu.hostel.booking.entity.BookingStatus;
 import ru.tpu.hostel.booking.entity.BookingType;
 import ru.tpu.hostel.booking.service.BookingService;
-import ru.tpu.hostel.internal.HostelCoreAutoConfiguration;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -38,7 +37,7 @@ public class BookingController {
      * Бронирует таймслот
      *
      * @param bookingTimeSlotRequestDto ДТО с ID слота
-     * @param userId ID юзера, который делает бронь
+     * @param userId                    ID юзера, который делает бронь
      * @return ДТО-ответ с информацией о брони
      */
     @PostMapping
@@ -50,12 +49,17 @@ public class BookingController {
      * Закрывает бронь
      *
      * @param bookingId ID брони
-     * @param userId ID юзера, который закрывает бронь
+     * @param userId    ID юзера, который закрывает бронь
      * @return ДТО-ответ с информацией о брони
      */
     @PatchMapping("/cancel/{bookingId}")
     public BookingResponse cancel(@PathVariable UUID bookingId) {
         return bookingService.cancelBooking(bookingId);
+    }
+
+    @PatchMapping("/cancel/by-timeslot/{timeslotId}")
+    public BookingResponse cancelByTimeSlot(@PathVariable UUID timeslotId) {
+        return bookingService.cancelBookingByTimeslot(timeslotId);
     }
 
     /**
@@ -68,6 +72,14 @@ public class BookingController {
     @GetMapping("get/all/by/status/user/{status}/{userId}")
     public List<BookingResponse> getAllByStatus(@PathVariable BookingStatus status, @PathVariable UUID userId) {
         return bookingService.getUserBookingsByStatus(status, userId);
+    }
+
+    @GetMapping("all/booked/timeslot-id")
+    public List<UUID> getAllByStatusShort(
+            @RequestParam(name = "userId") UUID userId,
+            @RequestParam(name = "date") LocalDate date
+    ) {
+        return bookingService.getUserBookingsByStatusShort(userId, date);
     }
 
     /**

@@ -15,6 +15,15 @@ public class BookedState implements BookingState {
 
     @Override
     public void updateStatus(Booking booking, BookingRepository bookingRepository) {
+//        long minutesBetween = Duration.between(booking.getStartTime(), TimeUtil.now()).toMinutes();
+//        if (minutesBetween >= 14 && minutesBetween <= 15) {
+//            notificationSender.sendNotification(
+//                    booking.getUser(),
+//                    NotificationType.BOOKING,
+//                    NotificationTimeUtil.getNotificationTitleForStartBooking(booking.getType()),
+//                    NotificationTimeUtil.getNotificationMessageForStartBooking(booking.getType())
+//            );
+//        }
         if (booking.getStartTime().isBefore(TimeUtil.now())) {
             booking.setStatus(BookingStatus.IN_PROGRESS);
             booking.setBookingState(new InProgressState());
@@ -22,7 +31,6 @@ public class BookedState implements BookingState {
             booking.getBookingState().updateStatus(booking, bookingRepository);
             if (booking.getStatus() == BookingStatus.IN_PROGRESS) {
                 bookingRepository.save(booking);
-                // TODO: отправить уведомление, что бронь началась
             }
         }
     }
@@ -31,7 +39,5 @@ public class BookedState implements BookingState {
     public void cancelBooking(Booking booking, BookingRepository bookingRepository) {
         booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
-
-        // TODO: отправить уведомление, что бронь закрыта
     }
 }

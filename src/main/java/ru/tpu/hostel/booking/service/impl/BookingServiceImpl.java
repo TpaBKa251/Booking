@@ -2,14 +2,13 @@ package ru.tpu.hostel.booking.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequest;
 import ru.tpu.hostel.booking.dto.response.BookingResponse;
 import ru.tpu.hostel.booking.dto.response.BookingResponseWithUser;
-import ru.tpu.hostel.booking.dto.response.TimeSlotResponse;
 import ru.tpu.hostel.booking.entity.Booking;
 import ru.tpu.hostel.booking.entity.BookingStatus;
 import ru.tpu.hostel.booking.entity.BookingType;
@@ -20,8 +19,11 @@ import ru.tpu.hostel.booking.external.amqp.schedule.dto.Timeslot;
 import ru.tpu.hostel.booking.mapper.BookingMapper;
 import ru.tpu.hostel.booking.repository.BookingRepository;
 import ru.tpu.hostel.booking.service.BookingService;
+import ru.tpu.hostel.booking.utils.NotificationTimeUtil;
 import ru.tpu.hostel.internal.exception.ServiceException;
 import ru.tpu.hostel.internal.external.amqp.AmqpMessageSender;
+import ru.tpu.hostel.internal.external.amqp.dto.NotificationType;
+import ru.tpu.hostel.internal.service.NotificationSender;
 import ru.tpu.hostel.internal.utils.ExecutionContext;
 import ru.tpu.hostel.internal.utils.Roles;
 
@@ -45,14 +47,12 @@ public class BookingServiceImpl implements BookingService {
 
     private final BookingMapper bookingMapper;
 
+    private final NotificationSender notificationSender;
+
     @Transactional
     @Override
     public BookingResponse createBooking(BookingTimeSlotRequest bookingTimeSlotRequest) {
         UUID userId = ExecutionContext.get().getUserID();
-        if (bookingRepository.existsByTimeSlotAndUser(bookingTimeSlotRequest.slotId(), userId)) {
-            throw new ServiceException.Conflict("Вы не можете забронировать слот повторно");
-        }
-
         ScheduleResponse scheduleResponse = amqpMessageSender.sendAndReceive(
                 ScheduleMessageType.BOOK,
                 bookingTimeSlotRequest.slotId().toString(),
@@ -61,10 +61,22 @@ public class BookingServiceImpl implements BookingService {
         );
 
         Booking booking = getBooking(userId, scheduleResponse);
-
         try {
-            return bookingMapper.mapToBookingResponse(bookingRepository.save(booking));
-        } catch (ConstraintViolationException e) {
+            bookingRepository.save(booking);
+            bookingRepository.flush();
+            notificationSender.sendNotification(
+                    userId,
+                    NotificationType.BOOKING,
+                    NotificationTimeUtil.getNotificationTitleForBook(booking.getType()),
+                    NotificationTimeUtil.getNotificationMessageForBook(
+                            booking.getType(),
+                            booking.getStartTime(),
+                            booking.getEndTime()
+                    )
+            );
+            return bookingMapper.mapToBookingResponse(booking);
+        } catch (DataIntegrityViolationException e) {
+            sendMessageCancellation(bookingTimeSlotRequest.slotId(), bookingTimeSlotRequest.slotId());
             throw new ServiceException.Conflict("Вы не можете забронировать слот повторно");
         }
     }
@@ -85,16 +97,6 @@ public class BookingServiceImpl implements BookingService {
         return booking;
     }
 
-    @Override
-    public List<TimeSlotResponse> getAvailableTimeslotsForBooking(
-            LocalDate date,
-            BookingType bookingType,
-            UUID userId
-    ) {
-        // TODO: после задачи HOSTEL-16 https://clck.ru/3J5LfV либо удалить этот метод, либо реализовать
-        return List.of();
-    }
-
     @Transactional(isolation = Isolation.REPEATABLE_READ)
     @Override
     public BookingResponse cancelBooking(UUID bookingId) {
@@ -105,19 +107,54 @@ public class BookingServiceImpl implements BookingService {
         if (bookingToCancel.getUser().equals(context.getUserID())
                 || Roles.hasPermissionToManageResourceType(context.getUserRoles(), bookingToCancel.getType())) {
             processCancellation(bookingToCancel);
+            notificationSender.sendNotification(
+                    context.getUserID(),
+                    NotificationType.BOOKING,
+                    NotificationTimeUtil.getNotificationTitleForCancel(bookingToCancel.getType()),
+                    NotificationTimeUtil.getNotificationMessageForCancel(
+                            bookingToCancel.getType(),
+                            bookingToCancel.getStartTime(),
+                            bookingToCancel.getEndTime()
+                    )
+            );
             return bookingMapper.mapToBookingResponse(bookingToCancel);
         }
 
         throw new ServiceException.Forbidden("Вы не можете закрыть чужую бронь");
     }
 
+    @Override
+    public BookingResponse cancelBookingByTimeslot(UUID timeslotId) {
+        ExecutionContext context = ExecutionContext.get();
+        Booking bookingToCancel = bookingRepository.findByUserAndTimeSlotForUpdate(context.getUserID(), timeslotId)
+                .orElseThrow(() -> new ServiceException.NotFound("Бронь не найдена"));
+
+        processCancellation(bookingToCancel);
+        notificationSender.sendNotification(
+                context.getUserID(),
+                NotificationType.BOOKING,
+                NotificationTimeUtil.getNotificationTitleForCancel(bookingToCancel.getType()),
+                NotificationTimeUtil.getNotificationMessageForCancel(
+                        bookingToCancel.getType(),
+                        bookingToCancel.getStartTime(),
+                        bookingToCancel.getEndTime()
+                )
+        );
+        return bookingMapper.mapToBookingResponse(bookingToCancel);
+    }
+
     private void processCancellation(Booking bookingToCancel) {
         bookingToCancel.getBookingState().cancelBooking(bookingToCancel, bookingRepository);
+        bookingRepository.flush();
+        sendMessageCancellation(bookingToCancel.getId(), bookingToCancel.getTimeSlot());
+    }
+
+    private void sendMessageCancellation(UUID bookingId, UUID timeSlotId) {
         try {
             amqpMessageSender.send(
                     ScheduleMessageType.CANCEL,
-                    bookingToCancel.getId().toString(),
-                    bookingToCancel.getTimeSlot()
+                    bookingId.toString(),
+                    timeSlotId
             );
         } catch (ServiceException e) {
             throw new ServiceException("Не можем закрыть бронь, попробуйте позже", e.getStatus());
@@ -130,6 +167,11 @@ public class BookingServiceImpl implements BookingService {
                 .stream()
                 .map(bookingMapper::mapToBookingResponse)
                 .toList();
+    }
+
+    @Override
+    public List<UUID> getUserBookingsByStatusShort(UUID userId, LocalDate date) {
+        return bookingRepository.findAllBookedTimeslotIdsByUser(userId, date);
     }
 
     @Override

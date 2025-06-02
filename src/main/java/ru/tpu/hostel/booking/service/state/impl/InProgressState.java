@@ -19,8 +19,6 @@ public class InProgressState implements BookingState {
         if (booking.getEndTime().isBefore(TimeUtil.now())) {
             booking.setStatus(BookingStatus.COMPLETED);
             bookingRepository.save(booking);
-
-            // TODO: отправить уведомление, что бронь завершилась
         }
     }
 

@@ -88,7 +88,15 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Booking> findByIdForUpdate(@Param("id") UUID id);
 
+    @Query("SELECT b FROM Booking b WHERE b.user = :user AND b.timeSlot = :timeSlot")
+    @Transactional
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<Booking> findByUserAndTimeSlotForUpdate(@Param("user") UUID user, @Param("timeSlot") UUID timeSlot);
+
     @Query("SELECT EXISTS(SELECT 1 FROM Booking b WHERE b.timeSlot = :timeslotId AND b.user = :userId AND b.status = 'BOOKED')")
     boolean existsByTimeSlotAndUser(@Param("timeslotId") UUID timeslotId, @Param("userId") UUID userId);
+
+    @Query("SELECT b.timeSlot FROM Booking b WHERE b.user = :user AND b.status = 'BOOKED' AND FUNCTION('DATE_TRUNC', 'day', b.startTime) = :date")
+    List<UUID> findAllBookedTimeslotIdsByUser(@Param("user") UUID user, @Param("date") LocalDate date);
 
 }

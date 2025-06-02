@@ -8,6 +8,8 @@ spring:
 rabbitmq:
   schedules-service:
     addresses: localhost:5672
+  notification-service:
+    addresses: localhost:5672
 
 otlp:
   tracing:

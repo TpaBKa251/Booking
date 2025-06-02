@@ -24,6 +24,24 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/BookingResponse"
+  /bookings/cancel/by-timeslot/{timeslotId}:
+    patch:
+      summary: "PATCH bookings/cancel/by-timeslot/{timeslotId}"
+      operationId: "cancelByTimeSlot"
+      parameters:
+        - name: "timeslotId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
   /bookings:
     post:
       summary: "POST bookings"
@@ -72,6 +90,33 @@ paths:
                 type: "array"
                 items:
                   $ref: "#/components/schemas/BookingResponse"
+  /bookings/all/booked/timeslot-id:
+    get:
+      summary: "GET bookings/all/booked/timeslot-id"
+      operationId: "getAllByStatusShort"
+      parameters:
+        - name: "userId"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+        - name: "date"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+            format: "date"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  type: "string"
+                  format: "uuid"
   /bookings/get/all/by/user/{userId}:
     get:
       summary: "GET bookings/get/all/by/user/{userId}"
@@ -106,7 +151,6 @@ paths:
               - "HALL"
               - "INTERNET"
               - "GYM"
-              - "KITCHEN"
         - name: "date"
           in: "path"
           required: true

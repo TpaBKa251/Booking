@@ -58,13 +58,14 @@ sonarqube {
 }
 
 ext {
-    set('internalLibraryVersion', "1.2.2")
+    set('internalLibraryVersion', "1.3.2")
 }
 
 dependencies {
     implementation "ru.tpu.hostel:hostel-core:${internalLibraryVersion}"
     implementation "ru.tpu.hostel:hostel-feign:${internalLibraryVersion}"
     implementation "ru.tpu.hostel:hostel-amqp:${internalLibraryVersion}"
+    implementation "ru.tpu.hostel:notification:${internalLibraryVersion}"
 
     implementation platform("org.springframework.cloud:spring-cloud-dependencies:2023.0.3")
     implementation 'org.springframework.security:spring-security-crypto:6.4.4'

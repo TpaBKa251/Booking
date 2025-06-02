@@ -64,6 +64,12 @@ rabbitmq:
     virtualHost: schedule-service
     addresses: rabbitmq:5672
     connectionTimeout: 6000
+  notification-service:
+    username: notification
+    password: notification
+    virtualHost: notification-service
+    addresses: rabbitmq:5672
+    connectionTimeout: 6000
 
 queueing:
   schedules-service:
@@ -73,6 +79,10 @@ queueing:
     cancel:
       exchangeName: schedule-timeslots-exchange
       routingKey: schedule-timeslots-cancel
+  notification-service:
+    send:
+      exchangeName: notification-exchange
+      routingKey: notification-send
 
 otlp:
   tracing:
