@@ -125,7 +125,7 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
     @Query(value = """
             SELECT b
             FROM Booking b
-            WHERE "user" = :user
+            WHERE b.user = :user
                 AND b.timeSlot = :timeSlot
                 AND b.status = 'BOOKED'
             """
