@@ -1,4 +1,4 @@
-FROM openjdk:17-jdk-slim
+FROM openjdk:21.0.6-jdk-slim
 WORKDIR /app
 COPY . .
 ARG INTERNAL_REPO_LOGIN
