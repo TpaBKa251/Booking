@@ -16,6 +16,6 @@ public class BookingStateUpdaterStartup {
     @Bean
     @LogFilter(enableMethodLogging = false)
     public ApplicationRunner updateBookingStatusesOnStart() {
-        return args -> bookingStateUpdater.updateBookingStatuses();
+        return args -> bookingStateUpdater.updateBookingStatusesOnStart();
     }
 }

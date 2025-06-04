@@ -33,7 +33,21 @@ spring:
           batch_size: 50
           order_inserts: true
           order_updates: true
+          fetch_size: 100
         generate_statistics: false
+        default_batch_fetch_size: 10
+        connection:
+          autocommit: false
+        cache:
+          use_second_level_cache: true
+          use_query_cache: true
+          region.factory_class: org.hibernate.cache.jcache.internal.JCacheRegionFactory
+        jakarta.cache:
+          provider: org.ehcache.jsr107.EhcacheCachingProvider
+          uri: classpath:ehcache.xml
+      sharedCache:
+        mode: ENABLE_SELECTIVE
+    open-in-view: false
 
   datasource:
     url: jdbc:postgresql://hostelDB:5432/hostelService
@@ -90,10 +104,6 @@ otlp:
     endpoint: http://tempo:4317
     timeout: 5000
     service-name: booking-service
-
-rest:
-  base-url:
-    user-service: http://userservice:8080
 
 springdoc:
   swagger-ui:

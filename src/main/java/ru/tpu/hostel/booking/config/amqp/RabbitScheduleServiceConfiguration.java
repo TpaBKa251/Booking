@@ -29,6 +29,7 @@ import java.util.Set;
 /**
  * Конфигурация брокера сообщений RabbitMQ для общения с микросервисом расписаний
  */
+@SuppressWarnings("NullableProblems")
 @Configuration
 @Slf4j
 @EnableConfigurationProperties({
@@ -171,6 +172,44 @@ public class RabbitScheduleServiceConfiguration {
             @Override
             public boolean isApplicable(Enum<?> amqpMessageType) {
                 return amqpMessageType == ScheduleMessageType.CANCEL;
+            }
+        };
+    }
+
+    @Bean
+    public AmqpMessagingConfig schedulesServiceAmqpMessagingConfigCancelWithoutTransaction(
+            @Qualifier(SCHEDULES_SERVICE_CONNECTION_FACTORY) ConnectionFactory connectionFactory,
+            @Qualifier(SCHEDULES_SERVICE_MESSAGE_CONVERTER) MessageConverter messageConverter,
+            RabbitScheduleServiceCancelQueueingProperties properties
+    ) {
+        return new AmqpMessagingConfig() {
+            @Override
+            public RabbitTemplate rabbitTemplate() {
+                RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+                rabbitTemplate.setMessageConverter(messageConverter);
+                rabbitTemplate.setExchange(properties.exchangeName());
+                rabbitTemplate.setRoutingKey(properties.routingKey());
+                rabbitTemplate.setObservationEnabled(true);
+                return rabbitTemplate;
+            }
+
+            @Override
+            public MessageProperties messageProperties() {
+                return MessagePropertiesBuilder.newInstance()
+                        .setPriority(10)
+                        .setDeliveryMode(MessageDeliveryMode.PERSISTENT)
+                        .setContentType(MessageProperties.CONTENT_TYPE_JSON)
+                        .build();
+            }
+
+            @Override
+            public Set<Microservice> receivingMicroservices() {
+                return Set.of(Microservice.SCHEDULE);
+            }
+
+            @Override
+            public boolean isApplicable(Enum<?> amqpMessageType) {
+                return amqpMessageType == ScheduleMessageType.CANCEL_WITHOUT_TRANSACTION;
             }
         };
     }

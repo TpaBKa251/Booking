@@ -1,9 +1,9 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.3.5'
-    id 'io.spring.dependency-management' version '1.1.6'
-    id 'org.owasp.dependencycheck' version '8.3.1'
-    id "org.sonarqube" version "6.0.1.5171"
+    id 'org.springframework.boot' version '3.5.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.owasp.dependencycheck' version '12.1.1'
+    id "org.sonarqube" version "6.2.0.5505"
     id 'jacoco'
 }
 
@@ -12,7 +12,7 @@ version = '0.0.1-SNAPSHOT'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
@@ -41,7 +41,7 @@ repositories {
 
 dependencyManagement {
     imports {
-        mavenBom "org.springframework.cloud:spring-cloud-dependencies:2023.0.3"
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:2025.0.0"
     }
 }
 
@@ -62,57 +62,75 @@ ext {
 }
 
 dependencies {
+    // Внутрення библиотека
     implementation "ru.tpu.hostel:hostel-core:${internalLibraryVersion}"
     implementation "ru.tpu.hostel:hostel-feign:${internalLibraryVersion}"
     implementation "ru.tpu.hostel:hostel-amqp:${internalLibraryVersion}"
     implementation "ru.tpu.hostel:notification:${internalLibraryVersion}"
 
-    implementation platform("org.springframework.cloud:spring-cloud-dependencies:2023.0.3")
-    implementation 'org.springframework.security:spring-security-crypto:6.4.4'
-    implementation 'commons-io:commons-io:2.14.0'
+    // Spring Boot starters
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
-    runtimeOnly 'org.postgresql:postgresql'
-    implementation "org.flywaydb:flyway-database-postgresql"
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     implementation 'org.springframework.boot:spring-boot-starter-amqp'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'org.mapstruct:mapstruct:1.5.3.Final'
-    implementation 'org.apache.commons:commons-compress:1.26.0'
-    implementation 'org.apache.poi:poi:5.2.3'
-    implementation 'org.apache.poi:poi-ooxml:5.4.0'
-    implementation 'org.apache.commons:commons-collections4:4.4'
-    implementation 'org.apache.xmlbeans:xmlbeans:5.1.1'
-    implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
-    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-    implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
-    implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
-    implementation 'io.micrometer:micrometer-tracing-bridge-otel:1.4.4'
-    implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.37.0'
-    implementation 'io.micrometer:micrometer-registry-prometheus'
-    implementation 'com.github.loki4j:loki-logback-appender:1.6.0'
-    implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.3'
+
+    // Spring Cloud
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:4.3.0'
+
+    // БД
+    runtimeOnly 'org.postgresql:postgresql:42.7.3'
+    implementation 'org.flywaydb:flyway-core:11.9.0'
+    implementation 'org.flywaydb:flyway-database-postgresql:11.9.0'
+    implementation 'org.ehcache:ehcache:3.10.8:jakarta'
+    implementation 'org.hibernate:hibernate-jcache:6.6.15.Final'
+
+    // Доки
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8'
+
+    // Утилиты
+    implementation 'org.mapstruct:mapstruct:1.6.3'
+    implementation 'commons-io:commons-io:2.19.0'
+    implementation 'org.apache.commons:commons-compress:1.27.1'
+    implementation 'org.apache.commons:commons-collections4:4.5.0'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.0'
     implementation 'com.squareup:javapoet:1.13.0'
 
-    compileOnly 'org.projectlombok:lombok'
+    // Безопасность
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+    implementation 'org.springframework.security:spring-security-crypto:6.5.0'
 
-    annotationProcessor 'org.projectlombok:lombok'
+    // Наблюдение (трассировка, метрики, экспорт)
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel:1.5.0'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.50.0'
+    implementation 'io.micrometer:micrometer-registry-prometheus:1.15.0'
+    implementation 'com.github.loki4j:loki-logback-appender:1.5.2'
+    implementation 'net.logstash.logback:logstash-logback-encoder:8.1'
+
+    // Jakarta
+    implementation 'jakarta.validation:jakarta.validation-api:3.1.1'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.38'
+    annotationProcessor 'org.projectlombok:lombok:1.18.38'
     annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
-    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.3.Final'
+
+    // MapStruct
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 
+    // Тесты
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-testcontainers'
     testImplementation 'org.springframework.security:spring-security-test'
-    testImplementation 'org.testcontainers:junit-jupiter'
-    testImplementation 'org.testcontainers:postgresql'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
-    testImplementation 'org.mockito:mockito-core:5.2.0'
-    testImplementation 'org.assertj:assertj-core:3.24.2'
-    testImplementation 'org.instancio:instancio-core:2.13.0'
+    testImplementation 'org.testcontainers:junit-jupiter:1.19.8'
+    testImplementation 'org.testcontainers:postgresql:1.19.8'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation 'org.mockito:mockito-core:5.12.0'
+    testImplementation 'org.assertj:assertj-core:3.26.0'
+    testImplementation 'org.instancio:instancio-core:4.6.0'
 }
 
 tasks.named('test') {
@@ -130,7 +148,7 @@ jacocoTestReport {
 }
 
 jacoco {
-    toolVersion = "0.8.11"
+    toolVersion = "0.8.12"
 }
 
 jar {

@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequest;
 import ru.tpu.hostel.booking.dto.response.BookingResponse;
@@ -19,7 +18,8 @@ import ru.tpu.hostel.booking.external.amqp.schedule.dto.Timeslot;
 import ru.tpu.hostel.booking.mapper.BookingMapper;
 import ru.tpu.hostel.booking.repository.BookingRepository;
 import ru.tpu.hostel.booking.service.BookingService;
-import ru.tpu.hostel.booking.utils.NotificationTimeUtil;
+import ru.tpu.hostel.booking.service.state.BookingState;
+import ru.tpu.hostel.booking.utils.NotificationUtil;
 import ru.tpu.hostel.internal.exception.ServiceException;
 import ru.tpu.hostel.internal.external.amqp.AmqpMessageSender;
 import ru.tpu.hostel.internal.external.amqp.dto.NotificationType;
@@ -28,7 +28,9 @@ import ru.tpu.hostel.internal.utils.ExecutionContext;
 import ru.tpu.hostel.internal.utils.Roles;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static ru.tpu.hostel.booking.entity.BookingStatus.BOOKED;
@@ -49,13 +51,12 @@ public class BookingServiceImpl implements BookingService {
 
     private final NotificationSender notificationSender;
 
+    private final Map<BookingStatus, BookingState> bookingStates;
+
     @Transactional
     @Override
     public BookingResponse createBooking(BookingTimeSlotRequest bookingTimeSlotRequest) {
         UUID userId = ExecutionContext.get().getUserID();
-        if (bookingRepository.existsByTimeSlotAndUser(bookingTimeSlotRequest.slotId(), userId)) {
-            throw new ServiceException.Conflict("Вы не можете забронировать слот повторно");
-        }
 
         ScheduleResponse scheduleResponse = amqpMessageSender.sendAndReceive(
                 ScheduleMessageType.BOOK,
@@ -67,12 +68,12 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = getBooking(userId, scheduleResponse);
         try {
             bookingRepository.save(booking);
-            //bookingRepository.flush();
+            bookingRepository.flush();
             notificationSender.sendNotification(
                     userId,
                     NotificationType.BOOKING,
-                    NotificationTimeUtil.getNotificationTitleForBook(booking.getType()),
-                    NotificationTimeUtil.getNotificationMessageForBook(
+                    NotificationUtil.getNotificationTitleForBook(booking.getType()),
+                    NotificationUtil.getNotificationMessageForBook(
                             booking.getType(),
                             booking.getStartTime(),
                             booking.getEndTime()
@@ -80,7 +81,7 @@ public class BookingServiceImpl implements BookingService {
             );
             return bookingMapper.mapToBookingResponse(booking);
         } catch (DataIntegrityViolationException e) {
-            //sendMessageCancellation(bookingTimeSlotRequest.slotId(), bookingTimeSlotRequest.slotId());
+            sendMessageCancellation(bookingTimeSlotRequest.slotId(), bookingTimeSlotRequest.slotId(), false);
             throw new ServiceException.Conflict("Вы не можете забронировать слот повторно");
         }
     }
@@ -101,70 +102,63 @@ public class BookingServiceImpl implements BookingService {
         return booking;
     }
 
-    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    @Transactional
     @Override
     public BookingResponse cancelBooking(UUID bookingId) {
         ExecutionContext context = ExecutionContext.get();
         Booking bookingToCancel = bookingRepository.findByIdForUpdate(bookingId)
                 .orElseThrow(() -> new ServiceException.NotFound("Бронь не найдена"));
 
-        if (bookingToCancel.getUser().equals(context.getUserID())
-                || Roles.hasPermissionToManageResourceType(context.getUserRoles(), bookingToCancel.getType())) {
-            processCancellation(bookingToCancel);
-            notificationSender.sendNotification(
-                    context.getUserID(),
-                    NotificationType.BOOKING,
-                    NotificationTimeUtil.getNotificationTitleForCancel(bookingToCancel.getType()),
-                    NotificationTimeUtil.getNotificationMessageForCancel(
-                            bookingToCancel.getType(),
-                            bookingToCancel.getStartTime(),
-                            bookingToCancel.getEndTime()
-                    )
-            );
-            return bookingMapper.mapToBookingResponse(bookingToCancel);
+        if (bookingToCancel.getUser().equals(context.getUserID())) {
+            processCancellation(bookingToCancel, true);
+        } else if (Roles.hasPermissionToManageResourceType(context.getUserRoles(), bookingToCancel.getType())) {
+            processCancellation(bookingToCancel, false);
+        } else {
+            throw new ServiceException.Forbidden("Вы не можете закрыть чужую бронь");
         }
 
-        throw new ServiceException.Forbidden("Вы не можете закрыть чужую бронь");
+        return bookingMapper.mapToBookingResponse(bookingToCancel);
     }
 
+    @Transactional
     @Override
     public BookingResponse cancelBookingByTimeslot(UUID timeslotId) {
         ExecutionContext context = ExecutionContext.get();
         Booking bookingToCancel = bookingRepository.findByUserAndTimeSlotForUpdate(context.getUserID(), timeslotId)
                 .orElseThrow(() -> new ServiceException.NotFound("Бронь не найдена"));
 
-        processCancellation(bookingToCancel);
-        notificationSender.sendNotification(
-                context.getUserID(),
-                NotificationType.BOOKING,
-                NotificationTimeUtil.getNotificationTitleForCancel(bookingToCancel.getType()),
-                NotificationTimeUtil.getNotificationMessageForCancel(
-                        bookingToCancel.getType(),
-                        bookingToCancel.getStartTime(),
-                        bookingToCancel.getEndTime()
-                )
-        );
+        processCancellation(bookingToCancel, true);
         return bookingMapper.mapToBookingResponse(bookingToCancel);
     }
 
-    private void processCancellation(Booking bookingToCancel) {
-        bookingToCancel.getBookingState().cancelBooking(bookingToCancel, bookingRepository);
-        bookingRepository.flush();
-        sendMessageCancellation(bookingToCancel.getId(), bookingToCancel.getTimeSlot());
+    private void processCancellation(Booking bookingToCancel, boolean cancelledByOwner) {
+        bookingStates.get(bookingToCancel.getStatus()).cancelBooking(bookingToCancel);
+        sendMessageCancellation(bookingToCancel.getId(), bookingToCancel.getTimeSlot(), true);
+        notificationSender.sendNotification(
+                ExecutionContext.get().getUserID(),
+                NotificationType.BOOKING,
+                NotificationUtil.getNotificationTitleForCancel(bookingToCancel.getType(), cancelledByOwner),
+                NotificationUtil.getNotificationMessageForCancel(
+                        bookingToCancel.getType(),
+                        bookingToCancel.getStartTime(),
+                        bookingToCancel.getEndTime(),
+                        cancelledByOwner
+                )
+        );
     }
 
-    private void sendMessageCancellation(UUID bookingId, UUID timeSlotId) {
+    private void sendMessageCancellation(UUID bookingId, UUID timeSlotId, boolean transacted) {
+        ScheduleMessageType type = transacted
+                ? ScheduleMessageType.CANCEL
+                : ScheduleMessageType.CANCEL_WITHOUT_TRANSACTION;
         try {
-            amqpMessageSender.send(
-                    ScheduleMessageType.CANCEL,
-                    bookingId.toString(),
-                    timeSlotId
-            );
+            amqpMessageSender.send(type, bookingId.toString(), timeSlotId);
         } catch (ServiceException e) {
             throw new ServiceException("Не можем закрыть бронь, попробуйте позже", e.getStatus());
         }
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<BookingResponse> getUserBookingsByStatus(BookingStatus status, UUID userId) {
         return bookingRepository.findAllByStatusAndUser(status, userId)
@@ -173,9 +167,11 @@ public class BookingServiceImpl implements BookingService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<UUID> getUserBookingsByStatusShort(UUID userId, LocalDate date) {
-        return bookingRepository.findAllBookedTimeslotIdsByUser(userId, date);
+        LocalDateTime dayStart = date.atStartOfDay();
+        return bookingRepository.findAllBookedTimeslotIdsByUser(userId, dayStart, dayStart.plusDays(1));
     }
 
     @Override
@@ -188,7 +184,12 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingResponseWithUser> getBookingsByTypeAndDateWithUser(BookingType bookingType, LocalDate date) {
-        return bookingRepository.findAllBookedBookingsByTypeAndStartTimeOnSpecificDay(bookingType, date)
+        LocalDateTime dayStart = date.atStartOfDay();
+        return bookingRepository.findAllBookedBookingsByTypeAndStartTimeOnSpecificDay(
+                        bookingType,
+                        dayStart,
+                        dayStart.plusDays(1)
+                )
                 .stream()
                 .map(bookingMapper::mapToBookingResponseWithUser)
                 .toList();
@@ -196,7 +197,8 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingResponseWithUser> getBookingsByDateWithUser(LocalDate date) {
-        return bookingRepository.findAllBookedBookingsOnSpecificDay(date)
+        LocalDateTime dayStart = date.atStartOfDay();
+        return bookingRepository.findAllBookedBookingsOnSpecificDay(dayStart, dayStart.plusDays(1))
                 .stream()
                 .map(bookingMapper::mapToBookingResponseWithUser)
                 .toList();

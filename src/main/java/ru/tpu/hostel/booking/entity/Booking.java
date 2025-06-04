@@ -1,5 +1,6 @@
 package ru.tpu.hostel.booking.entity;
 
+import jakarta.persistence.Cacheable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -7,19 +8,14 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PostLoad;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.proxy.HibernateProxy;
-import ru.tpu.hostel.booking.service.state.BookingState;
-import ru.tpu.hostel.booking.service.state.impl.BookedState;
-import ru.tpu.hostel.booking.service.state.impl.CancelState;
-import ru.tpu.hostel.booking.service.state.impl.CompletedState;
-import ru.tpu.hostel.booking.service.state.impl.InProgressState;
-import ru.tpu.hostel.booking.service.state.impl.NotBookedState;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -32,7 +28,10 @@ import java.util.UUID;
 @Entity
 @Getter
 @Setter
-@ToString(exclude = "bookingState")
+@ToString
+@DynamicUpdate
+@Cacheable
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Booking {
 
     @Id
@@ -49,9 +48,6 @@ public class Booking {
     @Column(name = "status")
     private BookingStatus status;
 
-    @Transient
-    private BookingState bookingState;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
     private BookingType type;
@@ -61,18 +57,6 @@ public class Booking {
 
     @Column(name = "time_slot_id")
     private UUID timeSlot;
-
-    @PostLoad
-    public void initializeBookingState() {
-        switch (this.status) {
-            case CANCELLED -> this.bookingState = new CancelState();
-            case NOT_BOOKED -> this.bookingState = new NotBookedState();
-            case BOOKED -> this.bookingState = new BookedState();
-            case IN_PROGRESS -> this.bookingState = new InProgressState();
-            case COMPLETED -> this.bookingState = new CompletedState();
-            default -> throw new IllegalArgumentException("Неизвестное состояние: " + this.status);
-        }
-    }
 
     @Override
     public final boolean equals(Object o) {

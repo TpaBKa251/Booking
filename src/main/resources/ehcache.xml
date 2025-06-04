@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.ehcache.org/v3"
+        xsi:schemaLocation="http://www.ehcache.org/v3
+                            http://www.ehcache.org/schema/ehcache-core.xsd">
+
+    <!-- Второй уровень кэша для сущности Booking -->
+    <cache alias="ru.tpu.hostel.booking.entity.Booking">
+        <resources>
+            <!-- Макс. 1000 записей в heap -->
+            <heap unit="entries">1000</heap>
+        </resources>
+        <expiry>
+            <ttl unit="minutes">10</ttl>
+        </expiry>
+    </cache>
+
+    <!-- Кэш результатов JPQL/HQL-запросов -->
+    <cache alias="org.hibernate.cache.internal.StandardQueryCache">
+        <resources>
+            <heap unit="entries">500</heap>
+        </resources>
+        <expiry>
+            <ttl unit="minutes">5</ttl>
+        </expiry>
+    </cache>
+
+    <!-- Кэш меток времени для инвалидирования Query Cache -->
+    <cache alias="org.hibernate.cache.spi.UpdateTimestampsCache">
+        <resources>
+            <heap unit="entries">100</heap>
+        </resources>
+        <expiry>
+            <ttl unit="minutes">5</ttl>
+        </expiry>
+    </cache>
+
+</config>

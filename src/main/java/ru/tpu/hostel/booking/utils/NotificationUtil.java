@@ -7,19 +7,23 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @UtilityClass
-public class NotificationTimeUtil {
+public class NotificationUtil {
 
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM");
 
-    private static final String BOOK_TITLE = "Вы записались в %s";
+    private static final String BOOK_TITLE = "Вы записаны в %s";
 
     private static final String BOOK_MESSAGE = BOOK_TITLE + " на %s в %s.";
 
-    private static final String CANCEL_TITLE = "Вы отменили запись в %s";
+    private static final String CANCEL_OWNER_TITLE = "Запись в %s отменена";
 
-    private static final String CANCEL_MESSAGE = CANCEL_TITLE + " на %s в %s. ";
+    private static final String CANCEL_OWNER_MESSAGE = "Запись в %s на %s в %s отменена.";
+
+    private static final String CANCEL_TITLE = "Вашу запись в %s отменили";
+
+    private static final String CANCEL_MESSAGE = "Запись в %s на %s в %s отменена ответственным за ресурс.";
 
     private static final String START_BOOKING_TITLE = "Ваша запись в %s скоро начнется";
 
@@ -37,16 +41,27 @@ public class NotificationTimeUtil {
         );
     }
 
-    public static String getNotificationTitleForCancel(BookingType type) {
-        return CANCEL_TITLE.formatted(type.getBookingTypeName());
+    public static String getNotificationTitleForCancel(BookingType type, boolean cancelledByOwner) {
+        return cancelledByOwner
+                ? CANCEL_OWNER_TITLE.formatted(type.getBookingTypeName())
+                : CANCEL_TITLE.formatted(type.getBookingTypeName());
     }
 
-    public static String getNotificationMessageForCancel(BookingType type, LocalDateTime start, LocalDateTime end) {
-        return CANCEL_MESSAGE.formatted(
+    public static String getNotificationMessageForCancel(
+            BookingType type,
+            LocalDateTime start,
+            LocalDateTime end,
+            boolean cancelledByOwner
+    ) {
+        return cancelledByOwner
+                ? CANCEL_OWNER_MESSAGE.formatted(
                 type.getBookingTypeName(),
                 start.toLocalDate().format(DATE_FORMATTER),
-                getTimeRange(start, end)
-        );
+                getTimeRange(start, end))
+                : CANCEL_MESSAGE.formatted(
+                type.getBookingTypeName(),
+                start.toLocalDate().format(DATE_FORMATTER),
+                getTimeRange(start, end));
     }
 
     public static String getNotificationTitleForStartBooking(BookingType type) {
