@@ -38,15 +38,16 @@ spring:
         default_batch_fetch_size: 10
         connection:
           autocommit: false
-        cache:
-          use_second_level_cache: true
-          use_query_cache: true
-          region.factory_class: org.hibernate.cache.jcache.internal.JCacheRegionFactory
-        jakarta.cache:
-          provider: org.ehcache.jsr107.EhcacheCachingProvider
-          uri: classpath:ehcache.xml
-      sharedCache:
-        mode: ENABLE_SELECTIVE
+# На будущее
+#        cache:
+#          use_second_level_cache: true
+#          use_query_cache: true
+#          region.factory_class: org.hibernate.cache.jcache.internal.JCacheRegionFactory
+#        jakarta.cache:
+#          provider: org.ehcache.jsr107.EhcacheCachingProvider
+#          uri: classpath:ehcache.xml
+#      sharedCache:
+#        mode: ENABLE_SELECTIVE
     open-in-view: false
 
   datasource:

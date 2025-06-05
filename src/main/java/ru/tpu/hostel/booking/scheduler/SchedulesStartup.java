@@ -9,13 +9,18 @@ import ru.tpu.hostel.internal.common.logging.LogFilter;
 @Configuration
 @RequiredArgsConstructor
 @LogFilter(enableMethodLogging = false)
-public class BookingStateUpdaterStartup {
+public class SchedulesStartup {
 
     private final BookingStateUpdater bookingStateUpdater;
+
+    private final CacheCleaner cacheCleaner;
 
     @Bean
     @LogFilter(enableMethodLogging = false)
     public ApplicationRunner updateBookingStatusesOnStart() {
-        return args -> bookingStateUpdater.updateBookingStatusesOnStart();
+        return args -> {
+            bookingStateUpdater.updateBookingStatusesOnStart();
+            cacheCleaner.cleanCache();
+        };
     }
 }

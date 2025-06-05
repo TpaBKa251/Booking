@@ -1,12 +1,9 @@
 package ru.tpu.hostel.booking.repository;
 
 import jakarta.persistence.LockModeType;
-import jakarta.persistence.QueryHint;
-import org.hibernate.jpa.HibernateHints;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ru.tpu.hostel.booking.entity.Booking;
@@ -53,7 +50,6 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
                 AND b.user = :user
             """
     )
-    @QueryHints({@QueryHint(name = HibernateHints.HINT_CACHEABLE, value = "true")})
     List<Booking> findAllByStatusAndUser(@Param("status") BookingStatus status, @Param("user") UUID user);
 
     /**
@@ -151,7 +147,6 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
                 AND b.startTime < :dayEnd
             """
     )
-    @QueryHints({@QueryHint(name = HibernateHints.HINT_CACHEABLE, value = "true")})
     List<UUID> findAllBookedTimeslotIdsByUser(
             @Param("user") UUID user,
             @Param("dayStart") LocalDateTime dayStart,

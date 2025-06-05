@@ -15,3 +15,14 @@ rabbitmq:
 otlp:
   tracing:
     endpoint: http://tempo.monitoring.svc.cluster.local:4317
+
+# На будущее
+#server:
+#  port: 8443
+#  http2:
+#    enabled: true
+#  ssl:
+#    enabled: true
+#    key-store: file:/etc/nginx/keystore2.p12y
+#    key-password: TpaBKa
+#    key-store-type: PKCS12

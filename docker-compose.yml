@@ -77,6 +77,18 @@ services:
     networks:
       - shared-network
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis-booking-cache
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    command: [ "redis-server", "--appendonly", "yes" ]
+    networks:
+      - shared-network
+
   bookingservice:
     container_name: bookingservice
     build:
@@ -94,6 +106,8 @@ services:
       - SPRING_DATASOURCE_PASSWORD=ilia
       - INTERNAL_REPO_LOGIN=${INTERNAL_REPO_LOGIN}
       - INTERNAL_REPO_PASSWORD=${INTERNAL_REPO_PASSWORD}
+      - REDIS_HOST=redis-booking-cache
+      - REDIS_PORT=6379
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 10s
@@ -112,3 +126,4 @@ networks:
 
 volumes:
   loki-data:
+  redis-data:

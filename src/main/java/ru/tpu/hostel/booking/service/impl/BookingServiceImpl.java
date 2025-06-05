@@ -2,9 +2,13 @@ package ru.tpu.hostel.booking.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.client.RedisConnectionException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.tpu.hostel.booking.config.cache.RedissonListCacheManager;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequest;
 import ru.tpu.hostel.booking.dto.response.BookingResponse;
 import ru.tpu.hostel.booking.dto.response.BookingResponseWithUser;
@@ -33,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static ru.tpu.hostel.booking.config.cache.RedissonCacheConfig.KEY_PATTERN;
 import static ru.tpu.hostel.booking.entity.BookingStatus.BOOKED;
 
 /**
@@ -53,6 +58,8 @@ public class BookingServiceImpl implements BookingService {
 
     private final Map<BookingStatus, BookingState> bookingStates;
 
+    private final RedissonListCacheManager<String, BookingResponse> cacheManager;
+
     @Transactional
     @Override
     public BookingResponse createBooking(BookingTimeSlotRequest bookingTimeSlotRequest) {
@@ -69,6 +76,7 @@ public class BookingServiceImpl implements BookingService {
         try {
             bookingRepository.save(booking);
             bookingRepository.flush();
+
             notificationSender.sendNotification(
                     userId,
                     NotificationType.BOOKING,
@@ -79,6 +87,12 @@ public class BookingServiceImpl implements BookingService {
                             booking.getEndTime()
                     )
             );
+
+            cacheManager.updateCache(
+                    KEY_PATTERN.formatted(userId, BOOKED),
+                    bookingMapper.mapToBookingResponse(booking)
+            );
+
             return bookingMapper.mapToBookingResponse(booking);
         } catch (DataIntegrityViolationException e) {
             sendMessageCancellation(bookingTimeSlotRequest.slotId(), bookingTimeSlotRequest.slotId(), false);
@@ -123,8 +137,8 @@ public class BookingServiceImpl implements BookingService {
     @Transactional
     @Override
     public BookingResponse cancelBookingByTimeslot(UUID timeslotId) {
-        ExecutionContext context = ExecutionContext.get();
-        Booking bookingToCancel = bookingRepository.findByUserAndTimeSlotForUpdate(context.getUserID(), timeslotId)
+        UUID userId = ExecutionContext.get().getUserID();
+        Booking bookingToCancel = bookingRepository.findByUserAndTimeSlotForUpdate(userId, timeslotId)
                 .orElseThrow(() -> new ServiceException.NotFound("Бронь не найдена"));
 
         processCancellation(bookingToCancel, true);
@@ -132,10 +146,11 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private void processCancellation(Booking bookingToCancel, boolean cancelledByOwner) {
+        UUID userId = ExecutionContext.get().getUserID();
         bookingStates.get(bookingToCancel.getStatus()).cancelBooking(bookingToCancel);
         sendMessageCancellation(bookingToCancel.getId(), bookingToCancel.getTimeSlot(), true);
         notificationSender.sendNotification(
-                ExecutionContext.get().getUserID(),
+                userId,
                 NotificationType.BOOKING,
                 NotificationUtil.getNotificationTitleForCancel(bookingToCancel.getType(), cancelledByOwner),
                 NotificationUtil.getNotificationMessageForCancel(
@@ -144,6 +159,10 @@ public class BookingServiceImpl implements BookingService {
                         bookingToCancel.getEndTime(),
                         cancelledByOwner
                 )
+        );
+        cacheManager.removeCache(
+                KEY_PATTERN.formatted(userId, BOOKED),
+                bookingToCancel.getId()
         );
     }
 
@@ -158,16 +177,35 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-    @Transactional(readOnly = true)
+    @Retryable(retryFor = RedisConnectionException.class, recover = "recoverGetUserBookingsByStatus", maxAttempts = 1)
     @Override
     public List<BookingResponse> getUserBookingsByStatus(BookingStatus status, UUID userId) {
-        return bookingRepository.findAllByStatusAndUser(status, userId)
+        List<BookingResponse> cachedBookings = cacheManager.getCache(KEY_PATTERN.formatted(userId, status));
+        if (cachedBookings == null) {
+            return getBookingsByStatusForUserWithCache(status, userId);
+        }
+        return cachedBookings;
+    }
+
+    @Recover
+    public List<BookingResponse> recoverGetUserBookingsByStatus(
+            RedisConnectionException e,
+            BookingStatus status,
+            UUID userId
+    ) {
+        log.warn("Не удалось подключиться к Redis");
+        return getBookingsByStatusForUserWithCache(status, userId);
+    }
+
+    private List<BookingResponse> getBookingsByStatusForUserWithCache(BookingStatus status, UUID userId) {
+        List<BookingResponse> bookingResponses = bookingRepository.findAllByStatusAndUser(status, userId)
                 .stream()
                 .map(bookingMapper::mapToBookingResponse)
                 .toList();
+        cacheManager.putCache(KEY_PATTERN.formatted(userId, status), bookingResponses);
+        return bookingResponses;
     }
 
-    @Transactional(readOnly = true)
     @Override
     public List<UUID> getUserBookingsByStatusShort(UUID userId, LocalDate date) {
         LocalDateTime dayStart = date.atStartOfDay();
