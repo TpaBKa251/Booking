@@ -1,4 +1,4 @@
 singleServerConfig:
-  address: "redis://${REDIS_HOST:-localhost}:${REDIS_PORT:-6379}"
+  address: "redis://${REDIS_HOST:-82.202.138}:${REDIS_PORT:-6379}"
   database: 0
 

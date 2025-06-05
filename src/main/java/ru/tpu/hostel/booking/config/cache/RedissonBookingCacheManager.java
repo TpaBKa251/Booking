@@ -26,14 +26,15 @@ public class RedissonBookingCacheManager implements RedissonListCacheManager<Str
     }
 
     @Async
+    @Override
     public void updateCache(String key, BookingResponse bookingResponses) {
         List<BookingResponse> newCache = new ArrayList<>(bookingResponseCache.getOrDefault(key, new ArrayList<>()));
         newCache.add(bookingResponses);
         putCache(key, newCache);
     }
 
-    @Override
     @Async
+    @Override
     public void removeCache(String key, Object id) {
         List<BookingResponse> cash = bookingResponseCache.getOrDefault(key, null);
         if (cash == null) {
@@ -42,6 +43,11 @@ public class RedissonBookingCacheManager implements RedissonListCacheManager<Str
         List<BookingResponse> newCache = new ArrayList<>(cash);
         newCache.removeIf(b -> b.id().equals(id));
         putCache(key, newCache);
+    }
+
+    @Override
+    public void clear() {
+        bookingResponseCache.clearAsync();
     }
 
 }

@@ -25,6 +25,9 @@ public class RedissonCacheConfig {
     @Value("classpath:redisson.yaml")
     private Resource cacheFile;
 
+    @Value("${redis.address}")
+    private String address;
+
     @Bean
     public RedissonClient redisson() throws IOException {
         Config config = Config.fromYAML(cacheFile.getInputStream());

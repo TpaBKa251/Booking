@@ -12,4 +12,6 @@ public interface RedissonListCacheManager<K, V> {
 
     void removeCache(K key, Object idOfElement);
 
+    void clear();
+
 }
