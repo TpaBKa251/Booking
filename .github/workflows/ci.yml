@@ -51,33 +51,33 @@ jobs:
           ./gradlew clean build   
 
   # Джоб для обычной сборки и тестирования
-  test:
-    name: Tests
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: 21
-          distribution: 'zulu'
-      - name: Run tests with Gradle
-        env:
-          INTERNAL_REPO_LOGIN: ${{ secrets.INTERNAL_REPO_LOGIN }}
-          INTERNAL_REPO_PASSWORD: ${{ secrets.INTERNAL_REPO_PASSWORD }}
-        run: |
-          chmod +x gradlew
-          ./gradlew clean test
+#  test:
+#    name: Tests
+#    runs-on: ubuntu-latest
+#    needs: build
+#
+#    steps:
+#      - uses: actions/checkout@v4
+#        with:
+#          fetch-depth: 0
+#      - name: Set up JDK 21
+#        uses: actions/setup-java@v4
+#        with:
+#          java-version: 21
+#          distribution: 'zulu'
+#      - name: Run tests with Gradle
+#        env:
+#          INTERNAL_REPO_LOGIN: ${{ secrets.INTERNAL_REPO_LOGIN }}
+#          INTERNAL_REPO_PASSWORD: ${{ secrets.INTERNAL_REPO_PASSWORD }}
+#        run: |
+#          chmod +x gradlew
+#          ./gradlew clean test
 
     # Джоб для запуска приложения в Docker и повторного тестирования
   dockerized:
     name: Build and run tests in Docker
     runs-on: ubuntu-latest
-    needs: test
+    needs: build #test
 
     steps:
       - uses: actions/checkout@v4
@@ -117,8 +117,8 @@ jobs:
           docker logs my-app
 
       # Запуск тестов внутри Docker
-      - name: Run tests inside Docker
-        run: docker exec my-app /app/gradlew test
+#      - name: Run tests inside Docker
+#        run: docker exec my-app /app/gradlew test
 
       # Остановка и удаление контейнеров
       - name: Stop and remove containers

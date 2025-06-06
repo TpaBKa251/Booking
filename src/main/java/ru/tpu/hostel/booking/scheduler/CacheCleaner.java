@@ -3,7 +3,7 @@ package ru.tpu.hostel.booking.scheduler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import ru.tpu.hostel.booking.config.cache.RedissonListCacheManager;
+import ru.tpu.hostel.booking.cache.RedissonListCacheManager;
 import ru.tpu.hostel.booking.dto.response.BookingResponse;
 
 @Service

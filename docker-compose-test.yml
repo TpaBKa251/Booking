@@ -33,7 +33,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: redis-cache
+    container_name: redis-booking-cache
     ports:
       - "6379:6379"
     restart: unless-stopped

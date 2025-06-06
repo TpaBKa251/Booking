@@ -111,6 +111,7 @@ dependencies {
 
     // Cache
     implementation 'com.github.ben-manes.caffeine:caffeine:3.2.0'
+    implementation 'de.javakaffee:kryo-serializers:0.45'
 
     // Jakarta
     implementation 'jakarta.validation:jakarta.validation-api:3.1.1'

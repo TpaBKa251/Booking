@@ -2,7 +2,7 @@ package ru.tpu.hostel.booking.service.state.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.tpu.hostel.booking.config.cache.RedissonListCacheManager;
+import ru.tpu.hostel.booking.cache.RedissonListCacheManager;
 import ru.tpu.hostel.booking.dto.response.BookingResponse;
 import ru.tpu.hostel.booking.entity.Booking;
 import ru.tpu.hostel.booking.entity.BookingStatus;

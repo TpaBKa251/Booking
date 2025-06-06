@@ -106,6 +106,18 @@ otlp:
     timeout: 5000
     service-name: booking-service
 
+redisson:
+  local-cache:
+    cash-size: 10000
+    timeout: 2000
+    ttl: 600
+    max-idle: 300
+    cache-name: booking
+  client:
+    address: redis://redis-booking-cache:6379
+    database: 0
+
+
 springdoc:
   swagger-ui:
     enabled: true

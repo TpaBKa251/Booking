@@ -12,12 +12,13 @@ rabbitmq:
   notification-service:
     addresses: 82.202.138.26:5672
 
-redis:
-  address: 82.202.138.26:6379
-
 otlp:
   tracing:
     endpoint: http://tempo.monitoring.svc.cluster.local:4317
+
+redisson:
+  client:
+    address: redis://82.202.138.26:6379
 
 # На будущее
 #server:

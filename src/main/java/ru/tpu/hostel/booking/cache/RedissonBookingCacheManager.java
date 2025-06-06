@@ -1,4 +1,4 @@
-package ru.tpu.hostel.booking.config.cache;
+package ru.tpu.hostel.booking.cache;
 
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RLocalCachedMap;

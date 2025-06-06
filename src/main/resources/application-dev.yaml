@@ -18,6 +18,10 @@ otlp:
     export-enabled: false
     endpoint: http://localhost:4317
 
+redisson:
+  client:
+    address: redis://localhost:6379
+
 rest:
   base-url:
     user-service: http://localhost:8081
