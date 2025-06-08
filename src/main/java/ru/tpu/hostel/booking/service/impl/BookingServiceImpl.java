@@ -125,6 +125,9 @@ public class BookingServiceImpl implements BookingService {
         }
 
         Timeslot timeslot = (Timeslot) scheduleResponse;
+        if (!timeslot.isAvailable()) {
+            throw new ServiceException.Conflict("Слот занят");
+        }
         Booking booking = new Booking();
         booking.setUser(userId);
         booking.setTimeSlot(timeslot.getId());
