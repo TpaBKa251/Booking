@@ -3,12 +3,19 @@ package ru.tpu.hostel.booking.config.amqp;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.trace.Tracer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.AmqpAdmin;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.core.MessagePropertiesBuilder;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -22,6 +29,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import ru.tpu.hostel.booking.external.amqp.schedule.ScheduleMessageType;
 import ru.tpu.hostel.internal.config.amqp.AmqpMessagingConfig;
+import ru.tpu.hostel.internal.config.amqp.interceptor.AmqpMessageReceiveInterceptor;
 import ru.tpu.hostel.internal.external.amqp.Microservice;
 
 import java.util.Set;
@@ -36,6 +44,7 @@ import java.util.Set;
         RabbitSchedulesServiceProperties.class,
         RabbitScheduleServiceBookQueueingProperties.class,
         RabbitScheduleServiceCancelQueueingProperties.class,
+        RabbitScheduleServiceTimeslotQueueingProperties.class
 })
 public class RabbitScheduleServiceConfiguration {
 
@@ -82,20 +91,55 @@ public class RabbitScheduleServiceConfiguration {
 
     @Bean(SCHEDULES_SERVICE_AMQP_ADMIN)
     public AmqpAdmin schedulesServiceAmqpAdmin(
-            @Qualifier(SCHEDULES_SERVICE_RABBIT_TEMPLATE) RabbitTemplate rabbitTemplate
+            @Qualifier(SCHEDULES_SERVICE_RABBIT_TEMPLATE) RabbitTemplate rabbitTemplate,
+            RabbitScheduleServiceTimeslotQueueingProperties queueingProperties
     ) {
-        return new RabbitAdmin(rabbitTemplate);
+        RabbitAdmin rabbitAdmin =  new RabbitAdmin(rabbitTemplate);
+        initQueue(
+                rabbitAdmin,
+                queueingProperties.exchangeName(),
+                queueingProperties.routingKey(),
+                queueingProperties.queueName()
+        );
+        return rabbitAdmin;
+    }
+
+    private void initQueue(RabbitAdmin rabbitAdmin, String exchangeName, String routingKey, String queueName) {
+        DirectExchange exchange = new DirectExchange(exchangeName);
+
+        Queue queue = QueueBuilder.durable(queueName)
+                .quorum()
+                .build();
+
+        rabbitAdmin.declareQueue(queue);
+        rabbitAdmin.declareExchange(exchange);
+        declareAndBindQueue(rabbitAdmin, routingKey, exchange, queue);
+    }
+
+    private void declareAndBindQueue(
+            RabbitAdmin rabbitAdmin,
+            String replyRoutingKey,
+            DirectExchange exchange,
+            Queue queue
+    ) {
+        Binding binding = BindingBuilder.bind(queue).to(exchange).with(replyRoutingKey);
+
+        rabbitAdmin.declareQueue(queue);
+        rabbitAdmin.declareBinding(binding);
     }
 
     @Bean(SCHEDULES_SERVICE_LISTENER)
     public SimpleRabbitListenerContainerFactory schedulesServiceListener(
-            @Qualifier(SCHEDULES_SERVICE_CONNECTION_FACTORY) ConnectionFactory connectionFactory
+            @Qualifier(SCHEDULES_SERVICE_CONNECTION_FACTORY) ConnectionFactory connectionFactory,
+            Tracer tracer,
+            OpenTelemetry openTelemetry
     ) {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
 
         factory.setAcknowledgeMode(AcknowledgeMode.AUTO);
         factory.setDefaultRequeueRejected(false);
         factory.setConnectionFactory(connectionFactory);
+        factory.setAdviceChain(new AmqpMessageReceiveInterceptor(tracer, openTelemetry));
         return factory;
     }
 

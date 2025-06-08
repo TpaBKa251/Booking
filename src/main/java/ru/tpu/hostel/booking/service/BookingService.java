@@ -1,13 +1,18 @@
 package ru.tpu.hostel.booking.service;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequest;
 import ru.tpu.hostel.booking.dto.response.BookingResponse;
 import ru.tpu.hostel.booking.dto.response.BookingResponseWithUser;
+import ru.tpu.hostel.booking.entity.Booking;
 import ru.tpu.hostel.booking.entity.BookingStatus;
 import ru.tpu.hostel.booking.entity.BookingType;
+import ru.tpu.hostel.booking.external.amqp.schedule.dto.Timeslot;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -70,5 +75,7 @@ public interface BookingService {
      * @return список ДТО-ответов броней
      */
     List<BookingResponseWithUser> getBookingsByDateWithUser(LocalDate date);
+
+    Slice<Booking> checkBookingsAfterUpdateCache(Pageable pageable, Map<UUID, Timeslot> timeslots);
 
 }

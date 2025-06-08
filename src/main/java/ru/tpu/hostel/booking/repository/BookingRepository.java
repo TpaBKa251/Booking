@@ -1,6 +1,8 @@
 package ru.tpu.hostel.booking.repository;
 
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -170,10 +172,18 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
     @Query(value = """
             SELECT b
             FROM Booking b
-            WHERE b.status IN (:statuses)
+            WHERE b.startTime <= :dayEnd
+                AND b.status IN ('CANCELLED', 'COMPLETED')
             """
     )
+    List<Booking> findAllForDelete(
+            @Param("dayEnd") LocalDateTime dayEnd
+    );
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<Booking> findAllByStatusIn(@Param("statuses") Collection<BookingStatus> statuses);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Page<Booking> findAllByStatusIn(@Param("statuses") Collection<BookingStatus> statuses, Pageable pageable);
 
 }

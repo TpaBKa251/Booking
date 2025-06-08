@@ -10,9 +10,9 @@ import org.redisson.config.SingleServerConfig;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import ru.tpu.hostel.booking.dto.response.BookingResponse;
+import ru.tpu.hostel.booking.external.amqp.schedule.dto.Timeslot;
 
-import java.util.List;
+import java.util.UUID;
 
 @Configuration
 @RequiredArgsConstructor
@@ -26,32 +26,32 @@ public class RedissonCacheConfig {
         Config config = new Config();
 
         SingleServerConfig singleServerConfig = config.useSingleServer();
-        singleServerConfig.setAddress(properties.address())
-                .setPassword(properties.password())
-                .setDatabase(properties.database())
-                .setTimeout(5000)
-                .setConnectTimeout(10000)
-                .setRetryAttempts(2)
-                .setConnectionPoolSize(30)
-                .setConnectionMinimumIdleSize(10)
-                .setSubscriptionConnectionPoolSize(10)
-                .setSubscriptionConnectionMinimumIdleSize(1)
-                .setIdleConnectionTimeout(10000)
-                .setPingConnectionInterval(30000)
-                .setKeepAlive(true)
-                .setTcpNoDelay(true)
-                .setClientName("bookng-redisson");
+        singleServerConfig.setAddress(properties.getAddress())
+                .setPassword(properties.getPassword())
+                .setDatabase(properties.getDatabase())
+                .setTimeout(properties.getTimeout())
+                .setConnectTimeout(properties.getConnectionTimeout())
+                .setRetryAttempts(properties.getRetryAttempts())
+                .setConnectionPoolSize(properties.getConnectionPoolSize())
+                .setConnectionMinimumIdleSize(properties.getConnectionMinimumIdleSize())
+                .setSubscriptionConnectionPoolSize(properties.getSubscriptionConnectionPoolSize())
+                .setSubscriptionConnectionMinimumIdleSize(properties.getSubscriptionConnectionMinimumIdleSize())
+                .setIdleConnectionTimeout(properties.getIdleConnectionTimeout())
+                .setPingConnectionInterval(properties.getPingConnectionInterval())
+                .setKeepAlive(properties.getKeepAlive())
+                .setTcpNoDelay(properties.getTcpNoDelay())
+                .setClientName(properties.getClientName());
 
         return Redisson.create(config);
     }
 
     @Bean
-    public RLocalCachedMap<String, List<BookingResponse>> createBookingMapCache(
+    public RLocalCachedMap<UUID, Timeslot> createBookingMapCache(
             RedissonClient redisson,
             RedissonLocalCacheProperties cacheProperties
     ) {
-        LocalCachedMapOptions<String, List<BookingResponse>> options = LocalCachedMapOptions
-                .<String, List<BookingResponse>>name(cacheProperties.cacheName())
+        LocalCachedMapOptions<UUID, Timeslot> options = LocalCachedMapOptions
+                .<UUID, Timeslot>name(cacheProperties.cacheName())
                 .cacheSize(cacheProperties.cashSize())
                 .timeout(cacheProperties.timeout())
                 .evictionPolicy(LocalCachedMapOptions.EvictionPolicy.LRU)

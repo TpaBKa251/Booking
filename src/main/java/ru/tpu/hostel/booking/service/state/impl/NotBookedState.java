@@ -19,7 +19,7 @@ public class NotBookedState implements BookingState {
 
     @Override
     public void cancelBooking(Booking booking) {
-        throw new ServiceException.UnprocessableEntity("Вы не можете отменить незабронированную бронь");
+        throw new ServiceException.Conflict("Вы не можете отменить незабронированную бронь");
     }
 
     @Override

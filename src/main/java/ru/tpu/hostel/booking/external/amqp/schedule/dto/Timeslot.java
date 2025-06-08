@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.Setter;
 import ru.tpu.hostel.booking.entity.BookingType;
 
 import java.time.LocalDateTime;
@@ -24,18 +25,31 @@ public class Timeslot extends ScheduleResponse {
 
     private final BookingType type;
 
+    private final Integer limit;
+
+    @Setter
+    private Integer bookingCount;
+
     @JsonCreator
     public Timeslot(
             @JsonProperty("id") UUID id,
             @JsonProperty("startTime") LocalDateTime startTime,
             @JsonProperty("endTime") LocalDateTime endTime,
-            @JsonProperty("type") BookingType type
+            @JsonProperty("type") BookingType type,
+            @JsonProperty("limit") Integer limit,
+            @JsonProperty("bookingCount") Integer bookingCount
     ) {
         super(ResponseStatus.SUCCESS);
         this.id = id;
         this.startTime = startTime;
         this.endTime = endTime;
         this.type = type;
+        this.limit = limit;
+        this.bookingCount = bookingCount;
+    }
+
+    public boolean isAvailable() {
+        return bookingCount < limit;
     }
 }
 

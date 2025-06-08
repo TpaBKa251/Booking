@@ -10,6 +10,7 @@ import ru.tpu.hostel.booking.repository.BookingRepository;
 import ru.tpu.hostel.booking.service.state.BookingState;
 import ru.tpu.hostel.internal.utils.TimeUtil;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,14 @@ public class BookingStateUpdater {
         LocalDateTime dayStart = now.toLocalDate().atStartOfDay();
         List<Booking> bookings = bookingRepository.findAllOnDayForUpdateStatus(dayStart, now.plusMinutes(1));
         updateBookingStatuses(bookings);
+    }
+
+    @Scheduled(cron = "0 30 4 * * *", zone = "Asia/Tomsk")
+    public void deleteOldBookings() {
+        List<Booking> bookingsForDelete = bookingRepository.findAllForDelete(
+                LocalDate.now().atStartOfDay().minusDays(29)
+        );
+        updateBookingStatuses(bookingsForDelete);
     }
 
     @Transactional

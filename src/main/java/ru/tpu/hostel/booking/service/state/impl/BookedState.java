@@ -2,8 +2,6 @@ package ru.tpu.hostel.booking.service.state.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.tpu.hostel.booking.cache.RedissonListCacheManager;
-import ru.tpu.hostel.booking.dto.response.BookingResponse;
 import ru.tpu.hostel.booking.entity.Booking;
 import ru.tpu.hostel.booking.entity.BookingStatus;
 import ru.tpu.hostel.booking.service.state.BookingState;
@@ -13,10 +11,6 @@ import ru.tpu.hostel.internal.service.NotificationSender;
 import ru.tpu.hostel.internal.utils.TimeUtil;
 
 import java.time.Duration;
-import java.util.UUID;
-
-import static ru.tpu.hostel.booking.config.cache.RedissonCacheConfig.KEY_PATTERN;
-import static ru.tpu.hostel.booking.entity.BookingStatus.BOOKED;
 
 /**
  * Реализация интерфейса {@link BookingState} для состояния "Забронировано"
@@ -29,13 +23,10 @@ public class BookedState implements BookingState {
 
     private final NotificationSender notificationSender;
 
-    private final RedissonListCacheManager<String, BookingResponse> cacheManager;
-
     @Override
     public void updateStatus(Booking booking) {
         if (booking.getStartTime().isBefore(TimeUtil.now())) {
             booking.setStatus(BookingStatus.IN_PROGRESS);
-            updateCache(booking.getId(), booking.getUser());
             inProgressState.updateStatus(booking);
         }
 
@@ -47,14 +38,6 @@ public class BookedState implements BookingState {
                     NotificationUtil.getNotificationTitleForStartBooking(booking.getType()),
                     NotificationUtil.getNotificationMessageForStartBooking(booking.getType())
             );
-        }
-    }
-
-    private void updateCache(UUID id, UUID userId) {
-        try {
-            cacheManager.removeCache(KEY_PATTERN.formatted(userId, BOOKED), id);
-        } catch (Exception ignored) {
-            // Ничего не делаем
         }
     }
 

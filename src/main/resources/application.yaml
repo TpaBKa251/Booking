@@ -38,16 +38,16 @@ spring:
         default_batch_fetch_size: 10
         connection:
           autocommit: false
-# На будущее
-#        cache:
-#          use_second_level_cache: true
-#          use_query_cache: true
-#          region.factory_class: org.hibernate.cache.jcache.internal.JCacheRegionFactory
-#        jakarta.cache:
-#          provider: org.ehcache.jsr107.EhcacheCachingProvider
-#          uri: classpath:ehcache.xml
-#      sharedCache:
-#        mode: ENABLE_SELECTIVE
+    # На будущее
+    #        cache:
+    #          use_second_level_cache: true
+    #          use_query_cache: true
+    #          region.factory_class: org.hibernate.cache.jcache.internal.JCacheRegionFactory
+    #        jakarta.cache:
+    #          provider: org.ehcache.jsr107.EhcacheCachingProvider
+    #          uri: classpath:ehcache.xml
+    #      sharedCache:
+    #        mode: ENABLE_SELECTIVE
     open-in-view: false
 
   datasource:
@@ -94,6 +94,11 @@ queueing:
     cancel:
       exchangeName: schedule-timeslots-exchange
       routingKey: schedule-timeslots-cancel
+    timeslot:
+      exchange-name: schedule-timeslots-exchange
+      queue-name: schedule-timeslots-get
+      routing-key: schedule-timeslots-get
+
   notification-service:
     send:
       exchangeName: notification-exchange
@@ -108,14 +113,14 @@ otlp:
 
 redisson:
   local-cache:
-    cash-size: 10000
+    cash-size: 5000
     timeout: 2000
-    ttl: 600
-    max-idle: 300
-    cache-name: booking
+    ttl: 86400
+    max-idle: 3600
+    cache-name: timeslots
   client:
     address: redis://redis-booking-cache:6379
-    database: 0
+    client-name: redisson-booking-cache
 
 
 springdoc:

@@ -29,6 +29,11 @@ public class NotificationUtil {
 
     private static final String START_BOOKING_MESSAGE = "Ваша запись в %s начнется через 15 минут.";
 
+    private static final String CHANGE_BOOKING_TITLE = "Ваша запись в %s изменилась";
+
+    private static final String CHANGE_BOOKING_MESSAGE
+            = "Время записи в %s на %s в %s изменилось. Новое время: %s, %s";
+
     public static String getNotificationTitleForBook(BookingType type) {
         return BOOK_TITLE.formatted(type.getBookingTypeName());
     }
@@ -71,6 +76,26 @@ public class NotificationUtil {
     public static String getNotificationMessageForStartBooking(BookingType type) {
         return START_BOOKING_MESSAGE.formatted(
                 type.getBookingTypeName()
+        );
+    }
+
+    public static String getNotificationTitleForChangeBooking(BookingType type) {
+        return CHANGE_BOOKING_TITLE.formatted(type.getBookingTypeName());
+    }
+
+    public static String getNotificationMessageForChangeBooking(
+            BookingType type,
+            LocalDateTime oldStart,
+            LocalDateTime oldEnd,
+            LocalDateTime newStart,
+            LocalDateTime newEnd
+    ) {
+        return CHANGE_BOOKING_MESSAGE.formatted(
+                type.getBookingTypeName(),
+                oldStart.toLocalDate().format(DATE_FORMATTER),
+                getTimeRange(oldStart, oldEnd),
+                newStart.toLocalDate().format(DATE_FORMATTER),
+                getTimeRange(newStart, newEnd)
         );
     }
 

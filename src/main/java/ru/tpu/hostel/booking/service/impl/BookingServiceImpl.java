@@ -1,14 +1,16 @@
 package ru.tpu.hostel.booking.service.impl;
 
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.client.RedisConnectionException;
+import org.redisson.api.RLock;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.retry.annotation.Recover;
-import org.springframework.retry.annotation.Retryable;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import ru.tpu.hostel.booking.cache.RedissonListCacheManager;
+import ru.tpu.hostel.booking.cache.RedissonCacheManager;
 import ru.tpu.hostel.booking.dto.request.BookingTimeSlotRequest;
 import ru.tpu.hostel.booking.dto.response.BookingResponse;
 import ru.tpu.hostel.booking.dto.response.BookingResponseWithUser;
@@ -26,6 +28,7 @@ import ru.tpu.hostel.booking.service.state.BookingState;
 import ru.tpu.hostel.booking.utils.NotificationUtil;
 import ru.tpu.hostel.internal.exception.ServiceException;
 import ru.tpu.hostel.internal.external.amqp.AmqpMessageSender;
+import ru.tpu.hostel.internal.external.amqp.dto.NotificationRequestDto;
 import ru.tpu.hostel.internal.external.amqp.dto.NotificationType;
 import ru.tpu.hostel.internal.service.NotificationSender;
 import ru.tpu.hostel.internal.utils.ExecutionContext;
@@ -33,12 +36,14 @@ import ru.tpu.hostel.internal.utils.Roles;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static ru.tpu.hostel.booking.config.cache.RedissonCacheConfig.KEY_PATTERN;
 import static ru.tpu.hostel.booking.entity.BookingStatus.BOOKED;
+import static ru.tpu.hostel.booking.entity.BookingStatus.CANCELLED;
+import static ru.tpu.hostel.booking.entity.BookingStatus.IN_PROGRESS;
 
 /**
  * Реализация сервиса броней {@link BookingService}
@@ -58,21 +63,36 @@ public class BookingServiceImpl implements BookingService {
 
     private final Map<BookingStatus, BookingState> bookingStates;
 
-    private final RedissonListCacheManager<String, BookingResponse> cacheManager;
+    private final EntityManager entityManager;
+
+    private final RedissonCacheManager<UUID, Timeslot> cacheManager;
 
     @Transactional
     @Override
     public BookingResponse createBooking(BookingTimeSlotRequest bookingTimeSlotRequest) {
         UUID userId = ExecutionContext.get().getUserID();
 
-        ScheduleResponse scheduleResponse = amqpMessageSender.sendAndReceive(
-                ScheduleMessageType.BOOK,
-                bookingTimeSlotRequest.slotId().toString(),
-                bookingTimeSlotRequest.slotId(),
-                ScheduleResponse.class
-        );
+        boolean needToUpdateCache = true;
+        RLock lock = cacheManager.getLock(bookingTimeSlotRequest.slotId());
+        lock.lock();
+        ScheduleResponse scheduleResponse = cacheManager.getCache(bookingTimeSlotRequest.slotId());
+        if (scheduleResponse == null) {
+            scheduleResponse = amqpMessageSender.sendAndReceive(
+                    ScheduleMessageType.BOOK,
+                    bookingTimeSlotRequest.slotId().toString(),
+                    bookingTimeSlotRequest.slotId(),
+                    ScheduleResponse.class
+            );
+            needToUpdateCache = false;
+        } else {
+            amqpMessageSender.send(
+                    ScheduleMessageType.BOOK,
+                    bookingTimeSlotRequest.slotId().toString(),
+                    bookingTimeSlotRequest.slotId()
+            );
+        }
 
-        Booking booking = getBooking(userId, scheduleResponse);
+        Booking booking = getBooking(userId, scheduleResponse, needToUpdateCache);
         try {
             bookingRepository.save(booking);
             bookingRepository.flush();
@@ -88,19 +108,17 @@ public class BookingServiceImpl implements BookingService {
                     )
             );
 
-            cacheManager.updateCache(
-                    KEY_PATTERN.formatted(userId, BOOKED),
-                    bookingMapper.mapToBookingResponse(booking)
-            );
-
             return bookingMapper.mapToBookingResponse(booking);
         } catch (DataIntegrityViolationException e) {
             sendMessageCancellation(bookingTimeSlotRequest.slotId(), bookingTimeSlotRequest.slotId(), false);
+
             throw new ServiceException.Conflict("Вы не можете забронировать слот повторно");
+        } finally {
+            lock.unlock();
         }
     }
 
-    private Booking getBooking(UUID userId, ScheduleResponse scheduleResponse) {
+    private Booking getBooking(UUID userId, ScheduleResponse scheduleResponse, boolean needToUpdateCache) {
         if (scheduleResponse instanceof Failure failure) {
             throw new ServiceException(failure.getMessage(), failure.getHttpStatus());
         }
@@ -113,6 +131,11 @@ public class BookingServiceImpl implements BookingService {
         booking.setEndTime(timeslot.getEndTime());
         booking.setStatus(BOOKED);
         booking.setType(timeslot.getType());
+
+        if (needToUpdateCache) {
+            timeslot.setBookingCount(timeslot.getBookingCount() + 1);
+        }
+        cacheManager.putCache(timeslot.getId(), timeslot);
         return booking;
     }
 
@@ -160,10 +183,11 @@ public class BookingServiceImpl implements BookingService {
                         cancelledByOwner
                 )
         );
-        cacheManager.removeCache(
-                KEY_PATTERN.formatted(userId, BOOKED),
-                bookingToCancel.getId()
-        );
+        Timeslot timeslot = cacheManager.getCache(bookingToCancel.getTimeSlot());
+        if (timeslot != null) {
+            timeslot.setBookingCount(timeslot.getBookingCount() - 1);
+            cacheManager.putCache(bookingToCancel.getTimeSlot(), timeslot);
+        }
     }
 
     private void sendMessageCancellation(UUID bookingId, UUID timeSlotId, boolean transacted) {
@@ -177,33 +201,12 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-    @Retryable(retryFor = RedisConnectionException.class, recover = "recoverGetUserBookingsByStatus", maxAttempts = 1)
     @Override
     public List<BookingResponse> getUserBookingsByStatus(BookingStatus status, UUID userId) {
-        List<BookingResponse> cachedBookings = cacheManager.getCache(KEY_PATTERN.formatted(userId, status));
-        if (cachedBookings == null) {
-            return getBookingsByStatusForUserWithCache(status, userId);
-        }
-        return cachedBookings;
-    }
-
-    @Recover
-    public List<BookingResponse> recoverGetUserBookingsByStatus(
-            RedisConnectionException e,
-            BookingStatus status,
-            UUID userId
-    ) {
-        log.warn("Не удалось подключиться к Redis");
-        return getBookingsByStatusForUserWithCache(status, userId);
-    }
-
-    private List<BookingResponse> getBookingsByStatusForUserWithCache(BookingStatus status, UUID userId) {
-        List<BookingResponse> bookingResponses = bookingRepository.findAllByStatusAndUser(status, userId)
+        return bookingRepository.findAllByStatusAndUser(status, userId)
                 .stream()
                 .map(bookingMapper::mapToBookingResponse)
                 .toList();
-        cacheManager.putCache(KEY_PATTERN.formatted(userId, status), bookingResponses);
-        return bookingResponses;
     }
 
     @Override
@@ -240,6 +243,71 @@ public class BookingServiceImpl implements BookingService {
                 .stream()
                 .map(bookingMapper::mapToBookingResponseWithUser)
                 .toList();
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Slice<Booking> checkBookingsAfterUpdateCache(Pageable pageable, Map<UUID, Timeslot> timeslots) {
+        Slice<Booking> bookings = bookingRepository.findAllByStatusIn(List.of(BOOKED, IN_PROGRESS), pageable);
+        List<NotificationRequestDto> notifications = new ArrayList<>();
+        for (Booking booking : bookings) {
+            notifications.add(processBooking(booking, timeslots.get(booking.getTimeSlot())));
+        }
+        entityManager.flush();
+        entityManager.clear();
+        notificationSender.sendNotification(notifications);
+        return bookings;
+    }
+
+    private NotificationRequestDto processBooking(Booking booking, Timeslot newTimeslot) {
+        NotificationRequestDto notification = null;
+        if (newTimeslot == null) {
+            notification = handleMissingTimeslot(booking);
+        } else if (!isSameTime(booking, newTimeslot)) {
+            notification = handleChangedTimeslot(booking, newTimeslot);
+        }
+
+        return notification;
+    }
+
+    private NotificationRequestDto handleMissingTimeslot(Booking booking) {
+        booking.setStatus(CANCELLED);
+        return new NotificationRequestDto(
+                booking.getUser(),
+                NotificationType.BOOKING,
+                NotificationUtil.getNotificationTitleForCancel(booking.getType(), false),
+                NotificationUtil.getNotificationMessageForCancel(
+                        booking.getType(),
+                        booking.getStartTime(),
+                        booking.getEndTime(),
+                        false
+                )
+        );
+    }
+
+    private NotificationRequestDto handleChangedTimeslot(Booking booking, Timeslot newTimeslot) {
+        LocalDateTime oldStart = booking.getStartTime();
+        LocalDateTime oldEnd = booking.getEndTime();
+        booking.setStartTime(newTimeslot.getStartTime());
+        booking.setEndTime(newTimeslot.getEndTime());
+
+        return new NotificationRequestDto(
+                booking.getUser(),
+                NotificationType.BOOKING,
+                NotificationUtil.getNotificationTitleForChangeBooking(booking.getType()),
+                NotificationUtil.getNotificationMessageForChangeBooking(
+                        booking.getType(),
+                        oldStart,
+                        oldEnd,
+                        newTimeslot.getStartTime(),
+                        newTimeslot.getEndTime()
+                )
+        );
+    }
+
+    private boolean isSameTime(Booking booking, Timeslot timeslot) {
+        return timeslot.getStartTime().equals(booking.getStartTime())
+                && timeslot.getEndTime().equals(booking.getEndTime());
     }
 
 }

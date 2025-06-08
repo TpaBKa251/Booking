@@ -13,14 +13,9 @@ public class SchedulesStartup {
 
     private final BookingStateUpdater bookingStateUpdater;
 
-    private final CacheCleaner cacheCleaner;
-
     @Bean
     @LogFilter(enableMethodLogging = false)
     public ApplicationRunner updateBookingStatusesOnStart() {
-        return args -> {
-            bookingStateUpdater.updateBookingStatusesOnStart();
-            cacheCleaner.cleanCache();
-        };
+        return args -> bookingStateUpdater.updateBookingStatusesOnStart();
     }
 }

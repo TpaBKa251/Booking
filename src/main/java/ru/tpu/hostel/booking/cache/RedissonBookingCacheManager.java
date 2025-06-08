@@ -2,52 +2,52 @@ package ru.tpu.hostel.booking.cache;
 
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RLocalCachedMap;
-import org.springframework.scheduling.annotation.Async;
+import org.redisson.api.RLock;
 import org.springframework.stereotype.Component;
-import ru.tpu.hostel.booking.dto.response.BookingResponse;
+import ru.tpu.hostel.booking.external.amqp.schedule.dto.Timeslot;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
-public class RedissonBookingCacheManager implements RedissonListCacheManager<String, BookingResponse> {
+public class RedissonBookingCacheManager implements RedissonCacheManager<UUID, Timeslot> {
 
-    private final RLocalCachedMap<String, List<BookingResponse>> bookingResponseCache;
+    private final RLocalCachedMap<UUID, Timeslot> bookingResponseCache;
 
     @Override
-    public void putCache(String key, List<BookingResponse> bookingResponses) {
-        bookingResponseCache.fastPutAsync(key, bookingResponses.stream().toList());
+    public void putCache(UUID key, Timeslot timeslot) {
+        bookingResponseCache.fastPutAsync(key, timeslot);
     }
 
     @Override
-    public List<BookingResponse> getCache(String key) {
+    public void putCache(List<Timeslot> timeslots) {
+        Map<UUID, Timeslot> newTimeslots = timeslots.stream()
+                .collect(Collectors.toMap(Timeslot::getId, Function.identity()));
+        bookingResponseCache.putAllAsync(newTimeslots);
+    }
+
+    @Override
+    public Timeslot getCache(UUID key) {
         return bookingResponseCache.get(key);
     }
 
-    @Async
     @Override
-    public void updateCache(String key, BookingResponse bookingResponses) {
-        List<BookingResponse> newCache = new ArrayList<>(bookingResponseCache.getOrDefault(key, new ArrayList<>()));
-        newCache.add(bookingResponses);
-        putCache(key, newCache);
-    }
-
-    @Async
-    @Override
-    public void removeCache(String key, Object id) {
-        List<BookingResponse> cash = bookingResponseCache.getOrDefault(key, null);
-        if (cash == null) {
-            return;
-        }
-        List<BookingResponse> newCache = new ArrayList<>(cash);
-        newCache.removeIf(b -> b.id().equals(id));
-        putCache(key, newCache);
+    public void removeCache(UUID key) {
+        bookingResponseCache.fastRemoveAsync(key);
     }
 
     @Override
     public void clear() {
         bookingResponseCache.clearAsync();
+    }
+
+    @Override
+    public RLock getLock(UUID key) {
+        return bookingResponseCache.getLock(key);
     }
 
 }

@@ -190,7 +190,7 @@ jobs:
           script: |
             cd Booking
             git pull origin master
-            sudo kubectl apply -f k8s/deployment.yaml
-            sudo kubectl apply -f k8s/service.yaml
+            sudo kubectl apply -f k8s/test/deployment.yaml
+            sudo kubectl apply -f k8s/test/service.yaml
             sudo kubectl rollout restart deployment/bookingservice
             sudo kubectl rollout status deployment/bookingservice
