@@ -74,28 +74,33 @@ public class BookingServiceImpl implements BookingService {
 
         boolean needToUpdateCache = true;
         RLock lock = cacheManager.getLock(bookingTimeSlotRequest.slotId());
-        lock.lock();
-        ScheduleResponse scheduleResponse = cacheManager.getCache(bookingTimeSlotRequest.slotId());
-        if (scheduleResponse == null) {
-            scheduleResponse = amqpMessageSender.sendAndReceive(
-                    ScheduleMessageType.BOOK,
-                    bookingTimeSlotRequest.slotId().toString(),
-                    bookingTimeSlotRequest.slotId(),
-                    ScheduleResponse.class
-            );
-            needToUpdateCache = false;
-        } else {
-            amqpMessageSender.send(
-                    ScheduleMessageType.BOOK,
-                    bookingTimeSlotRequest.slotId().toString(),
-                    bookingTimeSlotRequest.slotId()
-            );
-        }
-
-        Booking booking = getBooking(userId, scheduleResponse, needToUpdateCache);
         try {
+            lock.lock();
+            ScheduleResponse scheduleResponse = cacheManager.getCache(bookingTimeSlotRequest.slotId());
+            if (scheduleResponse == null) {
+                scheduleResponse = amqpMessageSender.sendAndReceive(
+                        ScheduleMessageType.BOOK,
+                        bookingTimeSlotRequest.slotId().toString(),
+                        bookingTimeSlotRequest.slotId(),
+                        ScheduleResponse.class
+                );
+                needToUpdateCache = false;
+            } else {
+                amqpMessageSender.send(
+                        ScheduleMessageType.BOOK,
+                        bookingTimeSlotRequest.slotId().toString(),
+                        bookingTimeSlotRequest.slotId()
+                );
+            }
+
+            Booking booking = getBooking(userId, scheduleResponse, needToUpdateCache);
             bookingRepository.save(booking);
-            bookingRepository.flush();
+            try {
+                bookingRepository.flush();
+            } catch (DataIntegrityViolationException e) {
+                sendMessageCancellation(bookingTimeSlotRequest.slotId(), bookingTimeSlotRequest.slotId(), false);
+                throw new ServiceException.Conflict("Вы не можете забронировать слот повторно");
+            }
 
             notificationSender.sendNotification(
                     userId,
@@ -109,10 +114,6 @@ public class BookingServiceImpl implements BookingService {
             );
 
             return bookingMapper.mapToBookingResponse(booking);
-        } catch (DataIntegrityViolationException e) {
-            sendMessageCancellation(bookingTimeSlotRequest.slotId(), bookingTimeSlotRequest.slotId(), false);
-
-            throw new ServiceException.Conflict("Вы не можете забронировать слот повторно");
         } finally {
             lock.unlock();
         }
