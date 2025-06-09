@@ -52,7 +52,7 @@ public class RabbitScheduleServiceListener {
         cacheManager.clear();
         try {
             List<Timeslot> timeslots = MAPPER.readValue(message.getBody(), new TypeReference<>() {});
-            cacheManager.putCache(timeslots);
+            cacheManager.putCacheAsync(timeslots);
             processBookingsInBatches(timeslots);
         } catch (Exception e) {
             log.error("Не удалось обновить кэш слотов", e);

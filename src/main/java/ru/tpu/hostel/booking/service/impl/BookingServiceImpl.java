@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static ru.tpu.hostel.booking.entity.BookingStatus.BOOKED;
 import static ru.tpu.hostel.booking.entity.BookingStatus.CANCELLED;
@@ -71,12 +72,16 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponse createBooking(BookingTimeSlotRequest bookingTimeSlotRequest) {
         UUID userId = ExecutionContext.get().getUserID();
+        UUID slotId = bookingTimeSlotRequest.slotId();
 
-        boolean needToUpdateCache = true;
-        RLock lock = cacheManager.getLock(bookingTimeSlotRequest.slotId());
+        RLock lock = cacheManager.getLock(slotId);
         try {
-            lock.lock();
-            ScheduleResponse scheduleResponse = cacheManager.getCache(bookingTimeSlotRequest.slotId());
+            if (!lock.tryLock(2, 5, TimeUnit.SECONDS)) {
+                throw new ServiceException.TooManyRequests("Превышено время ожидания бронирования");
+            }
+            ScheduleResponse scheduleResponse = cacheManager.getCache(slotId);
+
+            boolean needToUpdateCache = true;
             if (scheduleResponse == null) {
                 scheduleResponse = amqpMessageSender.sendAndReceive(
                         ScheduleMessageType.BOOK,
@@ -95,12 +100,7 @@ public class BookingServiceImpl implements BookingService {
 
             Booking booking = getBooking(userId, scheduleResponse, needToUpdateCache);
             bookingRepository.save(booking);
-            try {
-                bookingRepository.flush();
-            } catch (DataIntegrityViolationException e) {
-                sendMessageCancellation(bookingTimeSlotRequest.slotId(), bookingTimeSlotRequest.slotId(), false);
-                throw new ServiceException.Conflict("Вы не можете забронировать слот повторно");
-            }
+            tryFlush(slotId);
 
             notificationSender.sendNotification(
                     userId,
@@ -114,6 +114,9 @@ public class BookingServiceImpl implements BookingService {
             );
 
             return bookingMapper.mapToBookingResponse(booking);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ServiceException.ServiceUnavailable("Прервано ожидание блокировки");
         } finally {
             lock.unlock();
         }
@@ -141,6 +144,15 @@ public class BookingServiceImpl implements BookingService {
         }
         cacheManager.putCache(timeslot.getId(), timeslot);
         return booking;
+    }
+
+    private void tryFlush(UUID slotId) {
+        try {
+            bookingRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            sendMessageCancellation(slotId, slotId, false);
+            throw new ServiceException.Conflict("Вы не можете забронировать слот повторно");
+        }
     }
 
     @Transactional
@@ -190,7 +202,7 @@ public class BookingServiceImpl implements BookingService {
         Timeslot timeslot = cacheManager.getCache(bookingToCancel.getTimeSlot());
         if (timeslot != null) {
             timeslot.setBookingCount(timeslot.getBookingCount() - 1);
-            cacheManager.putCache(bookingToCancel.getTimeSlot(), timeslot);
+            cacheManager.putCacheAsync(bookingToCancel.getTimeSlot(), timeslot);
         }
     }
 

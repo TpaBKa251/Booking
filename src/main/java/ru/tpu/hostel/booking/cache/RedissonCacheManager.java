@@ -6,9 +6,11 @@ import java.util.List;
 
 public interface RedissonCacheManager<K, V> {
 
-    void putCache(K key, V value);
+    void putCacheAsync(K key, V value);
 
-    void putCache(List<V> value);
+    void putCacheAsync(List<V> value);
+
+    void putCache(K key, V value);
 
     V getCache(K key);
 

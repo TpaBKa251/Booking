@@ -19,15 +19,20 @@ public class RedissonBookingCacheManager implements RedissonCacheManager<UUID, T
     private final RLocalCachedMap<UUID, Timeslot> bookingResponseCache;
 
     @Override
-    public void putCache(UUID key, Timeslot timeslot) {
+    public void putCacheAsync(UUID key, Timeslot timeslot) {
         bookingResponseCache.fastPutAsync(key, timeslot);
     }
 
     @Override
-    public void putCache(List<Timeslot> timeslots) {
+    public void putCacheAsync(List<Timeslot> timeslots) {
         Map<UUID, Timeslot> newTimeslots = timeslots.stream()
                 .collect(Collectors.toMap(Timeslot::getId, Function.identity()));
         bookingResponseCache.putAllAsync(newTimeslots);
+    }
+
+    @Override
+    public void putCache(UUID key, Timeslot value) {
+        bookingResponseCache.fastPut(key, value);
     }
 
     @Override
