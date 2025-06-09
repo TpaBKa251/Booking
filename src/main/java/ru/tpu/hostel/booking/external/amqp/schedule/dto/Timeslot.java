@@ -49,7 +49,7 @@ public class Timeslot extends ScheduleResponse {
     }
 
     public boolean isAvailable() {
-        return bookingCount < limit;
+        return bookingCount.compareTo(limit) < 0;
     }
 }
 
