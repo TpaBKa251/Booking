@@ -116,7 +116,7 @@ redisson:
     cash-size: 5000
     timeout: 2000
     ttl: 86400
-    max-idle: 3600
+    max-idle: 86400
     cache-name: timeslots
   client:
     address: redis://redis-booking-cache:6379

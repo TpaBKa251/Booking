@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static ru.tpu.hostel.booking.entity.BookingStatus.BOOKED;
@@ -76,12 +77,12 @@ public class BookingServiceImpl implements BookingService {
 
         RLock lock = cacheManager.getLock(slotId);
         try {
-            if (!lock.tryLock(2, 5, TimeUnit.SECONDS)) {
+            if (!lock.tryLock(10, 10, TimeUnit.SECONDS)) {
                 throw new ServiceException.TooManyRequests("Превышено время ожидания бронирования");
             }
             ScheduleResponse scheduleResponse = cacheManager.getCache(slotId);
 
-            boolean needToUpdateCache = true;
+            final boolean needToUpdateCache = scheduleResponse != null;
             if (scheduleResponse == null) {
                 scheduleResponse = amqpMessageSender.sendAndReceive(
                         ScheduleMessageType.BOOK,
@@ -89,30 +90,12 @@ public class BookingServiceImpl implements BookingService {
                         bookingTimeSlotRequest.slotId(),
                         ScheduleResponse.class
                 );
-                needToUpdateCache = false;
-            } else {
-                amqpMessageSender.send(
-                        ScheduleMessageType.BOOK,
-                        bookingTimeSlotRequest.slotId().toString(),
-                        bookingTimeSlotRequest.slotId()
-                );
             }
 
             Booking booking = getBooking(userId, scheduleResponse, needToUpdateCache);
             bookingRepository.save(booking);
-            tryFlush(slotId);
-
-            notificationSender.sendNotification(
-                    userId,
-                    NotificationType.BOOKING,
-                    NotificationUtil.getNotificationTitleForBook(booking.getType()),
-                    NotificationUtil.getNotificationMessageForBook(
-                            booking.getType(),
-                            booking.getStartTime(),
-                            booking.getEndTime()
-                    )
-            );
-
+            tryFlush(slotId, needToUpdateCache);
+            CompletableFuture.runAsync(() -> endBookAsync(slotId, userId, booking, needToUpdateCache));
             return bookingMapper.mapToBookingResponse(booking);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -123,12 +106,12 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private Booking getBooking(UUID userId, ScheduleResponse scheduleResponse, boolean needToUpdateCache) {
-        if (scheduleResponse instanceof Failure failure) {
+        if (!needToUpdateCache && scheduleResponse instanceof Failure failure) {
             throw new ServiceException(failure.getMessage(), failure.getHttpStatus());
         }
 
         Timeslot timeslot = (Timeslot) scheduleResponse;
-        if (!timeslot.isAvailable()) {
+        if (needToUpdateCache && !timeslot.isAvailable()) {
             throw new ServiceException.Conflict("Слот занят");
         }
         Booking booking = new Booking();
@@ -146,13 +129,35 @@ public class BookingServiceImpl implements BookingService {
         return booking;
     }
 
-    private void tryFlush(UUID slotId) {
+    private void tryFlush(UUID slotId, boolean fromCache) {
         try {
             bookingRepository.flush();
         } catch (DataIntegrityViolationException e) {
-            sendMessageCancellation(slotId, slotId, false);
+            if (!fromCache) {
+                sendMessageCancellation(slotId, slotId, false);
+            }
             throw new ServiceException.Conflict("Вы не можете забронировать слот повторно");
         }
+    }
+
+    private void endBookAsync(UUID slotId, UUID userId, Booking booking, boolean fromCache) {
+        if (fromCache) {
+            amqpMessageSender.send(
+                    ScheduleMessageType.BOOK,
+                    slotId.toString(),
+                    slotId
+            );
+        }
+        notificationSender.sendNotification(
+                userId,
+                NotificationType.BOOKING,
+                NotificationUtil.getNotificationTitleForBook(booking.getType()),
+                NotificationUtil.getNotificationMessageForBook(
+                        booking.getType(),
+                        booking.getStartTime(),
+                        booking.getEndTime()
+                )
+        );
     }
 
     @Transactional
