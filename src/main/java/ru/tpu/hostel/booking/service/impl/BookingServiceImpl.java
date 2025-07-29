@@ -76,10 +76,12 @@ public class BookingServiceImpl implements BookingService {
         UUID slotId = bookingTimeSlotRequest.slotId();
 
         RLock lock = cacheManager.getLock(slotId);
+        boolean locked = false;
         try {
             if (!lock.tryLock(10, 10, TimeUnit.SECONDS)) {
                 throw new ServiceException.TooManyRequests("Превышено время ожидания бронирования");
             }
+            locked = true;
             ScheduleResponse scheduleResponse = cacheManager.getCache(slotId);
 
             final boolean needToUpdateCache = scheduleResponse != null;
@@ -101,7 +103,9 @@ public class BookingServiceImpl implements BookingService {
             Thread.currentThread().interrupt();
             throw new ServiceException.ServiceUnavailable("Прервано ожидание блокировки");
         } finally {
-            lock.unlock();
+            if (locked) {
+                lock.unlock();
+            }
         }
     }
 
@@ -135,6 +139,8 @@ public class BookingServiceImpl implements BookingService {
         } catch (DataIntegrityViolationException e) {
             if (!fromCache) {
                 sendMessageCancellation(slotId, slotId, false);
+            } else {
+                cacheManager.removeCache(slotId);
             }
             throw new ServiceException.Conflict("Вы не можете забронировать слот повторно");
         }
@@ -231,9 +237,9 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<UUID> getUserBookingsByStatusShort(UUID userId, LocalDate date) {
+    public List<UUID> getUserBookingsByStatusShort(UUID userId, LocalDate date, BookingType bookingType) {
         LocalDateTime dayStart = date.atStartOfDay();
-        return bookingRepository.findAllBookedTimeslotIdsByUser(userId, dayStart, dayStart.plusDays(1));
+        return bookingRepository.findAllBookedTimeslotIdsByUser(userId, dayStart, dayStart.plusDays(1), bookingType);
     }
 
     @Override

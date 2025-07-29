@@ -49,7 +49,7 @@ public interface BookingService {
      */
     List<BookingResponse> getUserBookingsByStatus(BookingStatus status, UUID userId);
 
-    List<UUID> getUserBookingsByStatusShort(UUID userId, LocalDate date);
+    List<UUID> getUserBookingsByStatusShort(UUID userId, LocalDate date, BookingType bookingType);
 
     /**
      * Возвращает все брони юзера в виде ДТО-ответов

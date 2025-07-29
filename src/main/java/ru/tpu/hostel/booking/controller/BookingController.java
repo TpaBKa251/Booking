@@ -76,10 +76,11 @@ public class BookingController {
 
     @GetMapping("all/booked/timeslot-id")
     public List<UUID> getAllByStatusShort(
-            @RequestParam(name = "userId") UUID userId,
-            @RequestParam(name = "date") LocalDate date
+            @RequestParam UUID userId,
+            @RequestParam LocalDate date,
+            @RequestParam BookingType type
     ) {
-        return bookingService.getUserBookingsByStatusShort(userId, date);
+        return bookingService.getUserBookingsByStatusShort(userId, date, type);
     }
 
     /**

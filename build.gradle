@@ -58,7 +58,7 @@ sonarqube {
 }
 
 ext {
-    set('internalLibraryVersion', "1.3.4")
+    set('internalLibraryVersion', "1.3.5")
 }
 
 dependencies {

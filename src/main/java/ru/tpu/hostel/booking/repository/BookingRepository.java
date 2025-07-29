@@ -147,12 +147,14 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
                 AND b.status = 'BOOKED'
                 AND b.startTime >= :dayStart
                 AND b.startTime < :dayEnd
+                AND b.type = :type
             """
     )
     List<UUID> findAllBookedTimeslotIdsByUser(
             @Param("user") UUID user,
             @Param("dayStart") LocalDateTime dayStart,
-            @Param("dayEnd") LocalDateTime dayEnd
+            @Param("dayEnd") LocalDateTime dayEnd,
+            @Param("type") BookingType type
     );
 
     @Query(value = """
