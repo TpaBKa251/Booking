@@ -6,7 +6,6 @@ on:
       - master
 
 jobs:
-  # Джоб для кеширования зависимостей
   cache:
     name: Cache dependencies
     runs-on: ubuntu-latest
@@ -28,12 +27,41 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
           restore-keys: ${{ runner.os }}-gradle
 
-  # Джоб для обычной сборки и тестирования
   build:
     name: Build
     runs-on: ubuntu-latest
     needs: cache
+    outputs:
+      jar-path: ${{ steps.upload.outputs.artifact-path || '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'zulu'
+
+      - name: Build with Gradle
+        env:
+          INTERNAL_REPO_LOGIN: ${{ secrets.INTERNAL_REPO_LOGIN }}
+          INTERNAL_REPO_PASSWORD: ${{ secrets.INTERNAL_REPO_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew clean assemble
+
+      - name: Upload built jar as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: build/libs/*.jar
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: build
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,94 +71,96 @@ jobs:
         with:
           java-version: 21
           distribution: 'zulu'
-      - name: Build with Gradle
+      - name: Run tests with Gradle
         env:
           INTERNAL_REPO_LOGIN: ${{ secrets.INTERNAL_REPO_LOGIN }}
           INTERNAL_REPO_PASSWORD: ${{ secrets.INTERNAL_REPO_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew clean build   
+          ./gradlew clean test
 
-  # Джоб для обычной сборки и тестирования
-#  test:
-#    name: Tests
-#    runs-on: ubuntu-latest
-#    needs: build
-#
-#    steps:
-#      - uses: actions/checkout@v4
-#        with:
-#          fetch-depth: 0
-#      - name: Set up JDK 21
-#        uses: actions/setup-java@v4
-#        with:
-#          java-version: 21
-#          distribution: 'zulu'
-#      - name: Run tests with Gradle
-#        env:
-#          INTERNAL_REPO_LOGIN: ${{ secrets.INTERNAL_REPO_LOGIN }}
-#          INTERNAL_REPO_PASSWORD: ${{ secrets.INTERNAL_REPO_PASSWORD }}
-#        run: |
-#          chmod +x gradlew
-#          ./gradlew clean test
-
-    # Джоб для запуска приложения в Docker и повторного тестирования
   dockerized:
-    name: Build and run tests in Docker
+    name: Build and run in Docker
     runs-on: ubuntu-latest
-    needs: build #test
+    needs: test
 
     steps:
       - uses: actions/checkout@v4
 
-      # Устанавливаем Docker Compose
+      - name: Download built jar from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: ./build/libs
+
       - name: Set up Docker Compose
         run: |
           sudo apt-get update
           sudo apt-get install -y docker-compose
 
-      # Сборка проекта и запуск тестов
-      - name: Build and run tests (assemble .jar and run tests)
-        env:
-          INTERNAL_REPO_LOGIN: ${{ secrets.INTERNAL_REPO_LOGIN }}
-          INTERNAL_REPO_PASSWORD: ${{ secrets.INTERNAL_REPO_PASSWORD }}
+      - name: Create minimal Dockerfile (uses built jar, avoids running gradle inside image)
         run: |
-          chmod +x gradlew
-          ./gradlew assemble  # Собираем и запускаем тесты
+          cat > Dockerfile.ci <<'EOF'
+          FROM openjdk:21-jdk-slim
+          WORKDIR /app
+          COPY build/libs/*.jar /app/app.jar
+          ENV INTERNAL_REPO_LOGIN=$INTERNAL_REPO_LOGIN
+          ENV INTERNAL_REPO_PASSWORD=$INTERNAL_REPO_PASSWORD
+          EXPOSE 8080
+          CMD ["java", "-Dspring.profiles.active=docker", "-jar", "/app/app.jar"]
+          EOF
 
-      # Стартуем сервисы в Docker
-      - name: Build and start services in Docker
+      - name: Build Docker image (single build)
         env:
           INTERNAL_REPO_LOGIN: ${{ secrets.INTERNAL_REPO_LOGIN }}
           INTERNAL_REPO_PASSWORD: ${{ secrets.INTERNAL_REPO_PASSWORD }}
-        run: docker-compose -f docker-compose-test.yml up --build -d
+          IMAGE: ghcr.io/tpabka251/bookingservice
+        run: |
+          IMAGE=${IMAGE}
+          docker build -f Dockerfile.ci -t ${IMAGE}:${GITHUB_SHA} .
 
-      # Ждем, пока контейнеры не будут готовы
+      - name: Create docker-compose override to use our image instead of build
+        env:
+          IMAGE: ghcr.io/tpabka251/bookingservice
+        run: |
+          cat > docker-compose.override.ci.yml <<EOF
+          version: '3.9'
+          services:
+            app:
+              image: ${IMAGE}:${GITHUB_SHA}
+          EOF
+
+      - name: Start docker-compose (postgres + rabbitmq + redis + app image)
+        run: |
+          docker-compose -f docker-compose-test.yml -f docker-compose.override.ci.yml up -d
+
       - name: Wait for services to be healthy
         run: |
           echo "Waiting for services to be healthy..."
+          # adjust waits/checks if needed
           sleep 20
-
-      # Проверка логов контейнера
-      - name: Check if container is running
-        run: |
           docker ps -a
-          docker logs my-app
+          docker logs my-app || true
 
-#      # Запуск тестов внутри Docker
-#      - name: Run tests inside Docker
-#        run: docker exec my-app /app/gradlew test
+      - name: Save docker image to tar and upload as artifact
+        env:
+          IMAGE: ghcr.io/tpabka251/bookingservice
+        run: |
+          IMAGE=${IMAGE}
+          docker save ${IMAGE}:${GITHUB_SHA} -o image.tar
+      - name: Upload docker image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: image.tar
 
-      # Остановка и удаление контейнеров
       - name: Stop and remove containers
-        run: docker-compose -f docker-compose-test.yml down
+        run: docker-compose -f docker-compose-test.yml -f docker-compose.override.ci.yml down --volumes --remove-orphans
 
-  # Джоб для анализа SonarQube
   sonar_analysis:
     name: SonarQube Analysis
     runs-on: ubuntu-latest
     needs: dockerized
-
     steps:
       - uses: actions/checkout@v4
         with:
@@ -148,37 +178,44 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew build sonarqube --info
-    continue-on-error: true # <-- Ошибки не ломают CI/CD
+    continue-on-error: true
 
   deploy:
     name: Deploy on Prod
     runs-on: ubuntu-latest
     needs: dockerized
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Download docker image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+          path: ./image-artifact
+
+      - name: Load image into Docker
+        run: |
+          docker load -i ./image-artifact/image.tar
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
       - name: Log in to GitHub Container Registry
+        env:
+          GPR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       - name: Build and Push Docker Image
         env:
           INTERNAL_REPO_LOGIN: ${{ secrets.INTERNAL_REPO_LOGIN }}
           INTERNAL_REPO_PASSWORD: ${{ secrets.INTERNAL_REPO_PASSWORD }}
+          IMAGE: ghcr.io/tpabka251/bookingservice
         run: |
-          IMAGE=ghcr.io/tpabka251/bookingservice
-          docker build \
-            --build-arg INTERNAL_REPO_LOGIN=${INTERNAL_REPO_LOGIN} \
-            --build-arg INTERNAL_REPO_PASSWORD=${INTERNAL_REPO_PASSWORD} \
-            -t $IMAGE:latest \
-            -t $IMAGE:${{ github.sha }} \
-            .
-          docker push $IMAGE:latest
-          docker push $IMAGE:${{ github.sha }}
+          IMAGE=${IMAGE}
+          docker tag ${IMAGE}:${GITHUB_SHA} ${IMAGE}:latest || true
+          docker push ${IMAGE}:${GITHUB_SHA}
+          docker push ${IMAGE}:latest
 
       - name: Deploy to k3s via SSH
         uses: appleboy/ssh-action@master
