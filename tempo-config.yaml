@@ -28,7 +28,7 @@ querier:
   frontend_worker:
     frontend_address: "tempo-query-frontend:9095"
 
-#metrics_generator:
+#metrics_generator:jsdkhf
 #  storage:
 #    path: /var/tempo/metrics
 #  registry:
