@@ -26,9 +26,6 @@ def repoUser = project.findProperty("privateRepoUsername") ?: System.getenv("INT
 def repoPass = project.findProperty("privateRepoPassword") ?: System.getenv("INTERNAL_REPO_PASSWORD")
 
 repositories {
-    maven {
-        url = "https://s01.oss.sonatype.org/content/repositories/snapshots"
-    }
     mavenCentral()
     google()
     gradlePluginPortal()
