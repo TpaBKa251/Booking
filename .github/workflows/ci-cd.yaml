@@ -64,7 +64,9 @@ jobs:
         env:
           INTERNAL_REPO_LOGIN: ${{ secrets.INTERNAL_REPO_LOGIN }}
           INTERNAL_REPO_PASSWORD: ${{ secrets.INTERNAL_REPO_PASSWORD }}
-        run: ./gradlew test --no-daemon
+        run: |
+          chmod +x gradlew
+          ./gradlew test --no-daemon
 
   dockerized:
     name: Build and run in Docker
@@ -113,7 +115,9 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           INTERNAL_REPO_LOGIN: ${{ secrets.INTERNAL_REPO_LOGIN }}
           INTERNAL_REPO_PASSWORD: ${{ secrets.INTERNAL_REPO_PASSWORD }}
-        run: ./gradlew sonar --info
+        run: |
+          chmod +x gradlew
+          ./gradlew sonar --info
     continue-on-error: true
 
   deploy:
