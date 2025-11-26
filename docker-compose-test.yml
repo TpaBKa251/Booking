@@ -72,3 +72,7 @@ services:
       retries: 5
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock  # Монтирование Docker сокета
+
+volumes:
+  loki-data:
+  redis-data:
