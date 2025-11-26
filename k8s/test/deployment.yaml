@@ -13,10 +13,7 @@ spec:
   template:
     metadata:
       labels:
-        app: spring-boot
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "8080"
-        prometheus.io/path: "/actuator/prometheus"
+        app: bookingservice
     spec:
       automountServiceAccountToken: false
       nodeSelector:

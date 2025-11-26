@@ -31,3 +31,11 @@ services:
       interval: 10s
       retries: 5
       timeout: 5s
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis-booking-cache
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    command: [ "redis-server", "--appendonly", "yes" ]

@@ -54,8 +54,7 @@ spring:
     open-in-view: false
 
   datasource:
-    driver-class-name: io.opentelemetry.instrumentation.jdbc.OpenTelemetryDriver
-    url: jdbc:otel:postgresql://hostelDB:5432/hostelService?otelTraceWithActiveSpanOnly=false&otelDbStatementSanitizerEnabled=true
+    url: jdbc:postgresql://hostelDB:5432/hostelService
     username: hostel
     password: ilia
 
