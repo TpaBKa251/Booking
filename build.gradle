@@ -1,9 +1,9 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.0'
+    id 'org.springframework.boot' version '3.5.8'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'org.owasp.dependencycheck' version '12.1.1'
-    id "org.sonarqube" version "6.2.0.5505"
+    id "org.sonarqube" version "7.0.1.6134"
     id 'jacoco'
 }
 
@@ -12,7 +12,7 @@ version = '0.0.1-SNAPSHOT'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
@@ -26,6 +26,9 @@ def repoUser = project.findProperty("privateRepoUsername") ?: System.getenv("INT
 def repoPass = project.findProperty("privateRepoPassword") ?: System.getenv("INTERNAL_REPO_PASSWORD")
 
 repositories {
+    maven {
+        url = "https://s01.oss.sonatype.org/content/repositories/snapshots"
+    }
     mavenCentral()
     google()
     gradlePluginPortal()
@@ -58,7 +61,7 @@ sonarqube {
 }
 
 ext {
-    set('internalLibraryVersion', "1.3.5")
+    set('internalLibraryVersion', "1.4.1")
 }
 
 dependencies {
@@ -81,12 +84,12 @@ dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:4.3.0'
 
     // БД
-    runtimeOnly 'org.postgresql:postgresql:42.7.3'
-    implementation 'org.flywaydb:flyway-core:11.9.0'
-    implementation 'org.flywaydb:flyway-database-postgresql:11.9.0'
+    runtimeOnly 'org.postgresql:postgresql:42.7.8'
+    implementation 'org.flywaydb:flyway-core:11.17.2'
+    implementation 'org.flywaydb:flyway-database-postgresql:11.17.2'
 
     // Доки
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
 
     // Утилиты
     implementation 'org.mapstruct:mapstruct:1.6.3'
@@ -103,14 +106,22 @@ dependencies {
     implementation 'org.springframework.security:spring-security-crypto:6.5.0'
 
     // Наблюдение (трассировка, метрики, экспорт)
-    implementation 'io.micrometer:micrometer-tracing-bridge-otel:1.5.0'
-    implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.50.0'
-    implementation 'io.micrometer:micrometer-registry-prometheus:1.15.0'
-    implementation 'com.github.loki4j:loki-logback-appender:1.5.2'
-    implementation 'net.logstash.logback:logstash-logback-encoder:8.1'
+    implementation platform("io.opentelemetry:opentelemetry-bom:1.49.0")
+    implementation platform("io.opentelemetry:opentelemetry-bom-alpha:1.49.0-alpha")
+    implementation platform("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.22.0")
+    implementation platform("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha:2.22.0-alpha")
+
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel:1.6.0'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-jdbc'
+    implementation 'io.micrometer:micrometer-registry-prometheus:1.16.0'
+    implementation 'com.github.loki4j:loki-logback-appender:2.0.1'
+    implementation 'io.opentelemetry.semconv:opentelemetry-semconv'
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-hibernate-common:1.13.1-alpha'
+    implementation 'net.logstash.logback:logstash-logback-encoder:9.0'
 
     // Cache
-    implementation 'com.github.ben-manes.caffeine:caffeine:3.2.0'
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.2.3'
     implementation 'de.javakaffee:kryo-serializers:0.45'
 
     // Jakarta
@@ -152,7 +163,7 @@ jacocoTestReport {
 }
 
 jacoco {
-    toolVersion = "0.8.12"
+    toolVersion = "0.8.14"
 }
 
 jar {

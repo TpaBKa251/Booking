@@ -13,9 +13,14 @@ spec:
   template:
     metadata:
       labels:
-        app: bookingservice
+        app: spring-boot
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/actuator/prometheus"
     spec:
       automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/hostname: "monitoring"
       containers:
         - name: bookingservice
           image: ghcr.io/tpabka251/bookingservice:latest
@@ -25,7 +30,8 @@ spec:
             - name: REDIS_PORT
               value: "6379"
           ports:
-            - containerPort: 8080
+            - name: http
+              containerPort: 8080
           resources:
             requests:
               cpu: "100m"

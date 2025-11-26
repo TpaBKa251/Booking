@@ -3,7 +3,7 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5430/hostelService
+    url: jdbc:otel:postgresql://localhost:5430/hostelService
   jpa:
     show-sql: true
 
@@ -15,7 +15,7 @@ rabbitmq:
 
 otlp:
   tracing:
-    export-enabled: false
+    export-enabled: true
     endpoint: http://localhost:4317
 
 redisson:

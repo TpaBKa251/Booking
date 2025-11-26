@@ -11,10 +11,10 @@ management:
       show-details: always
   tracing:
     enabled: true
+    sampling:
+      probability: 1.0
 
 logging:
-  file:
-    name: ./logs/application.log
   level:
     org.hibernate: OFF
 
@@ -29,6 +29,9 @@ spring:
       ddl-auto: validate
     properties:
       hibernate:
+        session_factory:
+          observer:
+            instrumentation: opentelemetry
         jdbc:
           batch_size: 50
           order_inserts: true
@@ -51,7 +54,8 @@ spring:
     open-in-view: false
 
   datasource:
-    url: jdbc:postgresql://hostelDB:5432/hostelService
+    driver-class-name: io.opentelemetry.instrumentation.jdbc.OpenTelemetryDriver
+    url: jdbc:otel:postgresql://hostelDB:5432/hostelService?otelTraceWithActiveSpanOnly=false&otelDbStatementSanitizerEnabled=true
     username: hostel
     password: ilia
 
