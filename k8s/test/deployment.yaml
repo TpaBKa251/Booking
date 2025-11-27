@@ -16,6 +16,8 @@ spec:
         app: bookingservice
     spec:
       automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/hostname: "monitoring"
       containers:
         - name: bookingservice
           image: ghcr.io/tpabka251/bookingservice:latest
@@ -25,7 +27,8 @@ spec:
             - name: REDIS_PORT
               value: "6379"
           ports:
-            - containerPort: 8080
+            - name: http
+              containerPort: 8080
           resources:
             requests:
               cpu: "100m"

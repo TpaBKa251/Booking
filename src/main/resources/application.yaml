@@ -11,10 +11,10 @@ management:
       show-details: always
   tracing:
     enabled: true
+    sampling:
+      probability: 1.0
 
 logging:
-  file:
-    name: ./logs/application.log
   level:
     org.hibernate: OFF
 
@@ -29,6 +29,9 @@ spring:
       ddl-auto: validate
     properties:
       hibernate:
+        session_factory:
+          observer:
+            instrumentation: opentelemetry
         jdbc:
           batch_size: 50
           order_inserts: true

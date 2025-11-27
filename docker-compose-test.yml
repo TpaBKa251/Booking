@@ -37,6 +37,8 @@ services:
     ports:
       - "6379:6379"
     restart: unless-stopped
+    volumes:
+      - redis-data:/data
     command: [ "redis-server", "--appendonly", "yes" ]
 
   app:
@@ -54,9 +56,6 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/test_db
       SPRING_DATASOURCE_USERNAME: test_user
       SPRING_DATASOURCE_PASSWORD: test_password
-      RABBITMQ_SCHEDULES-SERVICE_USERNAME: test_user
-      RABBITMQ_SCHEDULES-SERVICE_PASSWORD: test_password
-      RABBITMQ_SCHEDULES-SERVICE_VIRTUALHOST: test-host
       INTERNAL_REPO_LOGIN: ${INTERNAL_REPO_LOGIN}
       INTERNAL_REPO_PASSWORD: ${INTERNAL_REPO_PASSWORD}
       REDIS_HOST: redis-cache
@@ -70,3 +69,7 @@ services:
       retries: 5
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock  # Монтирование Docker сокета
+
+volumes:
+  loki-data:
+  redis-data:

@@ -15,7 +15,7 @@ rabbitmq:
 
 otlp:
   tracing:
-    export-enabled: false
+    export-enabled: true
     endpoint: http://localhost:4317
 
 redisson:
