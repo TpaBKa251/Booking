@@ -10,9 +10,6 @@ distributor:
           endpoint: "0.0.0.0:4317"
         http:
           endpoint: "0.0.0.0:4318"
-  # Параметры лимитов через CLI-флаги (не через YAML)
-  # Эти параметры НЕ поддерживаются в YAML-конфиге для версии 2.3.0
-  # Используйте CLI-флаги в docker-compose.yml
 
 ingester:
   trace_idle_period: 1m
@@ -21,19 +18,10 @@ ingester:
       kvstore:
         store: memberlist
       replication_factor: 1
-  # Лимиты также задаются через CLI-флаги
-  # Эти параметры НЕ поддерживаются в YAML-конфиге для версии 2.3.0
 
 querier:
   frontend_worker:
     frontend_address: "tempo-query-frontend:9095"
-
-#metrics_generator:jsdkhf
-#  storage:
-#    path: /var/tempo/metrics
-#  registry:
-#    external_labels:
-#      source: tempo
 
 storage:
   trace:

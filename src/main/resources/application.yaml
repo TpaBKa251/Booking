@@ -15,6 +15,9 @@ management:
       probability: 1.0
 
 logging:
+  pattern:
+    file: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSSXXX}){faint} %clr(%5level) %clr(${PID:- }){magenta} %clr(---){faint} [%applicationName] [%15.15thread] %clr([%-32X{traceId:-}-%-16X{spanId:-}]){yellow} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %msg%n"
+    console: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSSXXX}){faint} %clr(%5level) %clr(${PID:- }){magenta} %clr(---){faint} [%applicationName] [%15.15thread] %clr([%-32X{traceId:-}-%-16X{spanId:-}]){yellow} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %msg%n"
   level:
     org.hibernate: OFF
 
@@ -54,9 +57,10 @@ spring:
     open-in-view: false
 
   datasource:
-    url: jdbc:postgresql://hostelDB:5432/hostelService
+    url: jdbc:otel:postgresql://hostelDB:5432/hostelService
     username: hostel
     password: ilia
+    driver-class-name: io.opentelemetry.instrumentation.jdbc.OpenTelemetryDriver
 
   flyway:
     jdbc-properties:

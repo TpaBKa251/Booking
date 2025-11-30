@@ -3,7 +3,7 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5430/hostelService
+    url: jdbc:otel:postgresql://localhost:5430/hostelService
   jpa:
     show-sql: true
 
@@ -25,6 +25,30 @@ redisson:
 rest:
   base-url:
     user-service: http://localhost:8081
+
+springdoc:
+  api-docs:
+    path: /api-docs
+    version: OPENAPI_3_1
+    enabled: true
+
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    operationsSorter: >
+      function(a, b) {
+        const methodOrder = {
+          'get': '3', 'post': '0', 'put': '1', 
+          'patch': '2', 'delete': '4', 'head': '5', 
+          'options': '6', 'trace': '7'
+        };
+        return methodOrder[b.get("method")].localeCompare(methodOrder[a.get("method")]);
+      }
+    tags-sorter: none
+    display-request-duration: true
 
 # На будущее
 #server:
