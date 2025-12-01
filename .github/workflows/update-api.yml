@@ -55,12 +55,12 @@ jobs:
           
           timeout 60s bash -c 'until curl -f http://localhost:8082/actuator/health; do sleep 2; done'
           
-          if ! curl -f http://localhost:8081/actuator/health; then
+          if ! curl -f http://localhost:8082/actuator/health; then
             echo "Application failed to start within 60 seconds"
             exit 1
           fi
           
-          curl -f http://localhost:8081/api-docs.yaml -o openapi-temp.yaml
+          curl -f http://localhost:8082/api-docs.yaml -o openapi-temp.yaml
           
           kill $APP_PID || true
           wait $APP_PID || true
